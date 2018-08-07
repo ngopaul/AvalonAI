@@ -12,7 +12,7 @@ CREATE TABLE player_alignment AS
 
 /* how many people on each quest based on number of people */
 CREATE TABLE people_per_quest AS
-    SELECT 5 as num_players, 2 as quest_1, 3 as quest_2, 2 as quest_3, 3 as quest_4, 3 as quest 5 UNION
+    SELECT 5 as num_players, 2 as quest_1, 3 as quest_2, 2 as quest_3, 3 as quest_4, 3 as quest_5 UNION
     SELECT 6, 2, 3, 4, 3, 4 UNION
     SELECT 7, 2, 3, 3, 4, 4 UNION
     SELECT 8, 3, 4, 4, 5, 5 UNION
