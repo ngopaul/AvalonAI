@@ -1,4 +1,6 @@
 # This is the main file for Avalon AI inputs.
+import sqlite3
+from sqlite3 import OperationalError
 
 """ General global unchanging variables """
 game_state = 3
@@ -40,19 +42,58 @@ quest_history = []
 # 1: fail or success? (0 and 1 respectively)
 # 2: number of fails
 # 3: number of successes
+known_players = []
+# list of size NUM_PLAYERS, where each index correlates to the player number
+# the values are the role types, as above.
+
+""" Database methods """
+import sqlite3
+conn = sqlite3.connect('avalon.db')
+c = conn.cursor()
+
+""" Allows us to read in SQL files. """
+def executeScriptsFromFile(filename):
+    # Open and read the file as a single buffer
+    fd = open(filename, 'r')
+    sqlFile = fd.read()
+    fd.close()
+
+    # all SQL commands (split on ';')
+    sqlCommands = sqlFile.split(';')
+
+    # Execute every command from the input file
+    for command in sqlCommands:
+        # This will skip and report errors
+        # For example, if the tables do not yet exist, this will skip over
+        # the DROP TABLE commands
+        try:
+            c.execute(command)
+        except OperationalError as msg:
+            print("Command skipped: ", msg)
 
 """ Initializes the game. """
 def initialize():
-    global num_players
-    global role_types
-    global people_per_quest
+    global num_players, role_types, people_per_quest, current_leader, known_players
     num_players = int(input("Number of players: "))
+    role_types[0] = int(input("Normal Bad: "))
+    role_types[1] = int(input("Normal Good: "))
+    role_types[2] = int(input("Merlin: "))
+    role_types[3] = int(input("Percival: "))
+    role_types[4] = int(input("Morgana: "))
+    role_types[5] = int(input("Mordred: "))
+    role_types[6] = int(input("Oberon: "))
+    print("Initializing databases...")
+    executeScriptsFromFile("avalon.sql")
     # TODO
 
 """ One player accuses another of being evil, or being a specific role. """
 def accuse():
     # TODO
     pass
+
+""" The person using the AI knows the alignment of a player. """
+def known():
+    known_players[input("Which person? ")] = input("Which role? ")
 
 """ The current leader proposes a team. """
 def propose_team():
