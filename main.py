@@ -41,21 +41,6 @@ quest_history = []
 # 2: number of fails
 # 3: number of successes
 
-
-initialize()
-user_input = ""
-
-while (game_state > 1):
-    user_input = input("Command (type help for commands): ")
-    if (input == "help"):
-        print_help()
-    if (input == "proposeteam" or input == "pt"):
-        propose_team()
-    if (input == "accuse" or input == "ac"):
-        accuse()
-    if (input == "vote" or input == "v"):
-        vote()
-
 """ Initializes the game. """
 def initialize():
     global num_players
@@ -67,25 +52,27 @@ def initialize():
 """ One player accuses another of being evil, or being a specific role. """
 def accuse():
     # TODO
-    return
+    pass
 
 """ The current leader proposes a team. """
 def propose_team():
     # TODO
-    return
+    pass
 
 """ The players vote on the most recently proposed team. If rejected, adds to the rejected tally. """
 def vote():
     # TODO
-    return
+    pass
 
 """ Gets the results of a quest. Passes possesion of the leader to the next person. """
 def quest():
     # TODO
+    global current_leader
     current_leader = (current_leader + 1) % num_players
 
-
-
+def print_help():
+    # TODO
+    pass
 
 
 
@@ -97,7 +84,7 @@ Please write out the strategies that you think are valid for Minions, i.e. what 
 
 # Vote through an to-fail quest
 def mm_vote_to_fail():
-    return
+    pass
 
 """ Heuristics for Servants of Arthur 
 
@@ -106,4 +93,20 @@ Please write out the strategies that you think are valid for Servants, i.e. what
 """
 
 # Vote against a to-fail quest
-def sa_
+def sa_vote_against_fail():
+    pass
+
+
+initialize()
+user_input = ""
+
+while (game_state > 1):
+    user_input = input("Command (type help for commands): ")
+    if (user_input == "help"):
+        print_help()
+    if (user_input == "proposeteam" or user_input == "pt"):
+        propose_team()
+    if (user_input == "accuse" or user_input == "ac"):
+        accuse()
+    if (user_input == "vote" or user_input == "v"):
+        vote()
