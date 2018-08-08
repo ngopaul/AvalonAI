@@ -180,7 +180,7 @@ def print_help():
 while (a.game_state > 1):
     user_input = input("Command (type help for commands): ")
     if (user_input == "help"):
-        a.print_help()
+        print_help()
     if (user_input == "proposeteam" or user_input == "pt"):
         a.propose_team()
     if (user_input == "accuse" or user_input == "ac"):
