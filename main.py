@@ -175,9 +175,8 @@ class Avalon:
     def propose_team(self):
         print("Propose your team!")
         proposed_team = []
-        current_quest = len(self.quest_history)
-        for i in range(self.people_per_quest[current_quest]):
-            added_player = sanitised_input("Pick player " + str(i) + " for Quest " + str(current_quest) + ": ", int, max_=self.num_players - 1)
+        for i in range(self.people_per_quest[self.cur_quest()]):
+            added_player = sanitised_input("Pick player " + str(i) + " for Quest " + str(self.cur_quest()) + ": ", int, max_=self.num_players - 1)
             proposed_team.append(added_player)
         self.propose_history.append(proposed_team)
         answer = input("Proceed to vote? Yes (y) or No (n)? ")
@@ -209,10 +208,28 @@ class Avalon:
     """ Gets the results of a quest. Passes possesion of the leader to the next person. """
     def quest(self):
         print("Quest Initiated!")
+        votes = []
+        for i in range(self.people_per_quest[self.cur_quest()]):
+            votes.append(sanitised_input("Result " + str(i) + " is success (1) or fail (0): ", int, 0, 1))
+        fail = 0
+        success = 0
+        for vote in votes:
+            if vote == 0:
+                fail += 1
+            else:
+                success += 1
+        self.go_quest(len(self.propose_history) - 1, int(fail == 0), fail, success)
+        self.change_current_leader()
         
 
     def change_current_leader(self):
         self.current_leader = (self.current_leader + 1) % self.num_players
+
+    def cur_quest(self):
+        return len(self.quest_history)
+    
+    def go_quest(self, propose_position, result, fails, successes):
+        self.quest_history.append([propose_position, result, fails, successes])
 
     """ Heuristics for Minions of Mordred 
 
