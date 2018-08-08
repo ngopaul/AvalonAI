@@ -90,7 +90,6 @@ class Avalon:
         self.known_players = []
 
         self.initialize()
-       
 
     """ Allows us to read in SQL files. """
     def executeScriptsFromFile(self, filename, c):
@@ -189,9 +188,6 @@ class Avalon:
             self.vote_history.append([]) #Empty entry
             return
 
-
-
-
     """ The players vote on the most recently proposed team. If rejected, adds to the rejected tally. """
     def vote(self):
         # TODO
@@ -211,8 +207,6 @@ class Avalon:
             self.quest_state[5] = self.quest_state[5] + 1 # Increment rejected tally
             self.change_current_leader()
             return
-
-
 
     """ Gets the results of a quest. Passes possesion of the leader to the next person. """
     def quest(self):
