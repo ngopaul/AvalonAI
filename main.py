@@ -174,7 +174,6 @@ class Avalon:
 
     """ The current leader proposes a team. """
     def propose_team(self):
-        # TODO
         print("Propose your team!")
         proposed_team = []
         current_quest = len(self.quest_history)
@@ -194,7 +193,6 @@ class Avalon:
 
     """ The players vote on the most recently proposed team. If rejected, adds to the rejected tally. """
     def vote(self):
-        # TODO
         approved_counts, rejected_counts, vote_list = 0, 0, []
         for i in range(self.num_players):
             choice = sanitised_input("Player " + str(i) + ", approve (1) or reject (0) mission? ", int, 0, 1)
@@ -216,8 +214,7 @@ class Avalon:
 
     """ Gets the results of a quest. Passes possesion of the leader to the next person. """
     def quest(self):
-        # TODO
-        pass
+        print("Quest Initiated!")
         
 
     def change_current_leader(self):
