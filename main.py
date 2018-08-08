@@ -90,6 +90,7 @@ class Avalon:
         self.known_players = []
 
         self.initialize()
+       
 
     """ Allows us to read in SQL files. """
     def executeScriptsFromFile(self, filename, c):
@@ -155,12 +156,9 @@ class Avalon:
                     print("For", self.num_players, "players, you must have", row[1], "good guys and", row[2], "bad guys.")
 
     def load_info(self, c):
-        c.execute("SELECT * FROM people_per_quest")
-        rows = c.fetchall()
-        for row in rows:
-            if row[0] == self.num_players:
-                for i in range(5):
-                    self.people_per_quest[i] = row[i+1]
+        c.execute("SELECT * FROM people_per_quest WHERE num_players = " + str(self.num_players))
+        people_per_quest = c.fetchall()[0]
+        self.people_per_quest = [i for i in people_per_quest[1:]]
 
     """ One player accuses another of being evil, or being a specific role. """
     def accuse(self):
@@ -175,8 +173,9 @@ class Avalon:
     def propose_team(self):
         print("Propose your team!")
         proposed_team = []
-        for i in range(self.people_per_quest[self.cur_quest()]):
-            added_player = sanitised_input("Pick player " + str(i) + " for Quest " + str(self.cur_quest()) + ": ", int, max_=self.num_players - 1)
+        current_quest = len(self.quest_history)
+        for i in range(self.people_per_quest[current_quest]):
+            added_player = sanitised_input("Pick player " + str(i) + " for Quest " + str(current_quest) + ": ", int, max_=self.num_players - 1)
             proposed_team.append(added_player)
         self.propose_history.append(proposed_team)
         answer = input("Proceed to vote? Yes (y) or No (n)? ")
@@ -185,6 +184,9 @@ class Avalon:
         else:
             self.vote_history.append([]) #Empty entry
             return
+
+
+
 
     """ The players vote on the most recently proposed team. If rejected, adds to the rejected tally. """
     def vote(self):
@@ -205,6 +207,8 @@ class Avalon:
             self.change_current_leader()
             return
 
+
+
     """ Gets the results of a quest. Passes possesion of the leader to the next person. """
     def quest(self):
         print("Quest Initiated!")
@@ -221,15 +225,10 @@ class Avalon:
         self.go_quest(len(self.propose_history) - 1, int(fail == 0), fail, success)
         self.change_current_leader()
         
+        
 
     def change_current_leader(self):
         self.current_leader = (self.current_leader + 1) % self.num_players
-
-    def cur_quest(self):
-        return len(self.quest_history)
-    
-    def go_quest(self, propose_position, result, fails, successes):
-        self.quest_history.append([propose_position, result, fails, successes])
 
     """ Heuristics for Minions of Mordred 
 
