@@ -169,7 +169,6 @@ class Avalon:
     def propose_team(self):
         # TODO
         print("Propose your team!")
-        satisfied = False
         proposed_team = []
         current_quest = size(self.quest_history)
         for i in range(self.people_per_quest[current_quest]):
