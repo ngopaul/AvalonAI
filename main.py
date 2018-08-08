@@ -191,7 +191,7 @@ class Avalon:
         # TODO
         approved_counts, rejected_counts, vote_list = 0, 0, []
         for i in range(self.num_players):
-            choice = int(input("Player", i, ", approve (1) or reject (0) mission?"))
+            choice = int(input("Player " + str(i) + ", approve (1) or reject (0) mission?"))
             if choice == 1:
                 approved_counts += 1
             else: 
@@ -203,8 +203,8 @@ class Avalon:
             self.quest()
         else:
             self.quest_state[5] = self.quest_state[5] + 1 # Increment rejected tally
-            # change current leader and restart process
             self.change_current_leader()
+            return
 
 
 
