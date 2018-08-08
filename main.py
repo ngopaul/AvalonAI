@@ -61,7 +61,7 @@ class Avalon:
        
 
     """ Allows us to read in SQL files. """
-    def executeScriptsFromFile(self, filename):
+    def executeScriptsFromFile(self, filename, c):
         # Open and read the file as a single buffer
         fd = open(filename, 'r')
         sqlFile = fd.read()
@@ -90,15 +90,16 @@ class Avalon:
         self.role_types[4] = int(input("Morgana: "))
         self.role_types[5] = int(input("Mordred: "))
         self.role_types[6] = int(input("Oberon: "))
+        
         print("Initializing databases...")
-        self.executeScriptsFromFile("avalon.sql")
-        self.query_database("avalon.db")
+        conn = sqlite3.connect("avalon.db")
+        c = conn.cursor()
+        self.executeScriptsFromFile("avalon.sql", c)
+        self.query_database(c)
 
-    def query_database(self, db_file):
-        conn = sqlite3.connect(db_file)
-        cur = conn.cursor()
-        cur.execute("SELECT * FROM player_alignment")
-        rows = cur.fetchall()
+    def query_database(self, c):
+        c.execute("SELECT * FROM player_alignment")
+        rows = c.fetchall()
         for row in rows:
             print(row)
 
@@ -110,7 +111,7 @@ class Avalon:
 
     """ The person using the AI knows the alignment of a player. """
     def known(self):
-        known_players[input("Which person? ")] = input("Which role? ")
+        self.known_players[input("Which person? ")] = input("Which role? ")
 
     """ The current leader proposes a team. """
     def propose_team(self):
@@ -125,8 +126,7 @@ class Avalon:
     """ Gets the results of a quest. Passes possesion of the leader to the next person. """
     def quest(self):
         # TODO
-        global current_leader
-        current_leader = (current_leader + 1) % num_players
+        self.current_leader = (self.current_leader + 1) % self.num_players
 
     def print_help(self):
         # TODO
@@ -161,10 +161,10 @@ user_input = ""
 while (a.game_state > 1):
     user_input = input("Command (type help for commands): ")
     if (user_input == "help"):
-        print_help()
+        a.print_help()
     if (user_input == "proposeteam" or user_input == "pt"):
-        propose_team()
+        a.propose_team()
     if (user_input == "accuse" or user_input == "ac"):
-        accuse()
+        a.accuse()
     if (user_input == "vote" or user_input == "v"):
-        vote()
+        a.vote()
