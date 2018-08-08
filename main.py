@@ -2,6 +2,38 @@
 import sqlite3
 from sqlite3 import OperationalError
 
+""" Utilities """
+# @StackOverflow Community
+def sanitised_input(prompt, type_=None, min_=None, max_=None, range_=None):
+    if min_ is not None and max_ is not None and max_ < min_:
+        raise ValueError("min_ must be less than or equal to max_.")
+    while True:
+        ui = input(prompt)
+        if type_ is not None:
+            try:
+                ui = type_(ui)
+            except ValueError:
+                print("Input type must be {0}.".format(type_.__name__))
+                continue
+        if max_ is not None and ui > max_:
+            print("Input must be less than or equal to {0}.".format(max_))
+        elif min_ is not None and ui < min_:
+            print("Input must be greater than or equal to {0}.".format(min_))
+        elif range_ is not None and ui not in range_:
+            if isinstance(range_, range):
+                template = "Input must be between {0.start} and {0.stop}."
+                print(template.format(range_))
+            else:
+                template = "Input must be {0}."
+                if len(range_) == 1:
+                    print(template.format(*range_))
+                else:
+                    print(template.format(" or ".join((", ".join(map(str,
+                                                                     range_[:-1])),
+                                                       str(range_[-1])))))
+        else:
+            return ui
+
 class Avalon:
     def __init__(self):
         """ Game States:
@@ -82,24 +114,28 @@ class Avalon:
 
     """ Initializes the game. """
     def initialize(self):
-        self.num_players = int(input("Number of players: "))
-        if not (5 <= self.num_players <= 10):
-            print("Avalon requires at least 5 players and at most 10 players!")
-            self.initialize()
-            return
-        self.role_types['Normal Bad'] = int(input("Normal Bad: "))
-        self.role_types['Normal Good'] = int(input("Normal Good: "))
-        self.role_types['Merlin'] = int(input("Merlin: "))
-        self.role_types['Percival'] = int(input("Percival: "))
-        self.role_types['Morgana'] = int(input("Morgana: "))
-        self.role_types['Mordred'] = int(input("Mordred: "))
-        self.role_types['Oberon'] = int(input("Oberon: "))
+        useIn = input("Welcome to Avalon AI! Press enter to continue. ")
+        if useIn != "skip":
+            self.num_players = sanitised_input("Number of Players: ", int, 5, 10)
+            self.role_types['Normal Bad'] = sanitised_input("Normal Bad: ", int)
+            self.role_types['Normal Good'] = sanitised_input("Normal Good: ", int)
+            self.role_types['Merlin'] = sanitised_input("Merlin: ", int)
+            self.role_types['Percival'] = sanitised_input("Percival: ", int)
+            self.role_types['Morgana'] = sanitised_input("Morgana: ", int)
+            self.role_types['Mordred'] = sanitised_input("Mordred: ", int)
+            self.role_types['Oberon'] = sanitised_input("Oberon: ", int)
+
+            print("Initializing databases...")
+            conn = sqlite3.connect("avalon.db")
+            c = conn.cursor()
+            self.executeScriptsFromFile("avalon.sql", c)
+            self.check_parameters(c)
+            self.load_info(c)
+            print("Initialized databases.")
+            
+            self.current_leader = sanitised_input("Starting leader: ", int, max_= self.num_players - 1)
         
-        print("Initializing databases...")
-        conn = sqlite3.connect("avalon.db")
-        c = conn.cursor()
-        self.executeScriptsFromFile("avalon.sql", c)
-        self.check_parameters(c)
+        print("Let the game begin!\n")
 
     def check_parameters(self, c):
         c.execute("SELECT * FROM player_alignment")
@@ -108,11 +144,16 @@ class Avalon:
         num_bad = self.role_types['Normal Bad'] + self.role_types['Morgana'] + self.role_types['Mordred'] + self.role_types['Oberon']
         for row in rows:
             if row[0] == self.num_players:
-                if row[1] == num_good and row[2] == num_bad:
-                    print("Let the game begin!\n")
-                else:
+                if not (row[1] == num_good and row[2] == num_bad):
                     print("For", self.num_players, "players, you must have", row[1], "good guys and", row[2], "bad guys.")
 
+    def load_info(self, c):
+        c.execute("SELECT * FROM people_per_quest")
+        rows = c.fetchall()
+        for row in rows:
+            if row[0] == self.num_players:
+                for i in range(5):
+                    self.people_per_quest[i] = row[i+1]
 
     """ One player accuses another of being evil, or being a specific role. """
     def accuse(self):
@@ -187,4 +228,6 @@ while (a.game_state > 1):
         a.accuse()
     if (user_input == "vote" or user_input == "v"):
         a.vote()
+    if (user_input == "break"):
+        break
 
