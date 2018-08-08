@@ -100,7 +100,7 @@ class Avalon:
     def check_parameters(self, c):
         c.execute("SELECT * FROM player_alignment")
         rows = c.fetchall()
-        if not (5 >= self.num_players <= 10):
+        if not (5 <= self.num_players <= 10):
             print("Avalon requires at least 5 players and at most 10 players!")
             self.initialize()
         else: 
