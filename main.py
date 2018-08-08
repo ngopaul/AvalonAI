@@ -135,7 +135,14 @@ class Avalon:
             print("Initialized databases.")
             
             self.current_leader = sanitised_input("Starting leader: ", int, max_= self.num_players - 1)
-        
+        elif useIn == "skip":
+            self.num_players = 5
+            self.role_types['Normal Bad'] = 2
+            self.role_types['Normal Good'] = 3
+            self.known_players = [-1 for i in range(self.num_players)]
+            conn = sqlite3.connect("avalon.db")
+            c = conn.cursor()
+            self.load_info(c)
         print("Let the game begin!\n")
 
     def check_parameters(self, c):
@@ -172,15 +179,14 @@ class Avalon:
         proposed_team = []
         current_quest = len(self.quest_history)
         for i in range(self.people_per_quest[current_quest]):
-            added_player = int(input("Pick player " + str(i) + " for Quest " + str(current_quest)))
+            added_player = sanitised_input("Pick player " + str(i) + " for Quest " + str(current_quest) + ": ", int, max_=self.num_players - 1)
             proposed_team.append(added_player)
         self.propose_history.append(proposed_team)
-        answer = input("Are you satisfied with this team? Yes (Y) or No (N)?")
+        answer = input("Proceed to vote? Yes (y) or No (n)? ")
         if answer.lower() == "y":
             self.vote()
         else:
             self.vote_history.append([]) #Empty entry
-            self.propose_team()
             return
 
 
@@ -191,7 +197,7 @@ class Avalon:
         # TODO
         approved_counts, rejected_counts, vote_list = 0, 0, []
         for i in range(self.num_players):
-            choice = int(input("Player " + str(i) + ", approve (1) or reject (0) mission?"))
+            choice = sanitised_input("Player " + str(i) + ", approve (1) or reject (0) mission? ", int, 0, 1)
             if choice == 1:
                 approved_counts += 1
             else: 
