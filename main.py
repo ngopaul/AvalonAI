@@ -124,6 +124,7 @@ class Avalon:
             self.role_types['Morgana'] = sanitised_input("Morgana: ", int)
             self.role_types['Mordred'] = sanitised_input("Mordred: ", int)
             self.role_types['Oberon'] = sanitised_input("Oberon: ", int)
+            self.known_players = [-1 for i in range(self.num_players)]
 
             print("Initializing databases...")
             conn = sqlite3.connect("avalon.db")
@@ -167,18 +168,55 @@ class Avalon:
     """ The current leader proposes a team. """
     def propose_team(self):
         # TODO
-        pass
+        print("Propose your team!")
+        satisfied = False
+        proposed_team = []
+        current_mission = size(self.quest_history)
+        for i in range(self.people_per_quest[current_mission]):
+            added_player = int(input("Pick player", i, "for Mission", current_mission))
+            proposed_team.append(added_player)
+        self.propose_history.append(proposed_team)
+        answer = input("Are you satisfied with this team? Yes (Y) or No (N)?")
+        if answer.lower() == "y":
+            self.vote()
+        else:
+            self.vote_history.append([]) #Empty entry
+            self.propose_team()
+            return
+
+
+
 
     """ The players vote on the most recently proposed team. If rejected, adds to the rejected tally. """
     def vote(self):
         # TODO
-        pass
+        approved_counts, rejected_counts, vote_list = 0, 0, []
+        for i in range(self.num_players):
+            choice = int(input("Player", i, ", approve (1) or reject (0) mission?"))
+            if choice == 1:
+                approved_counts += 1
+            else: 
+                rejected_counts += 1
+            vote_list.append(choice)
+        self.vote_history.append(vote_list)
+        if accepted_counts > rejected_counts:
+            self.quest_state[5] = 0 # Reset rejected tally
+            self.quest()
+        else:
+            self.quest_state[5] = self.quest_state[5] + 1 # Increment rejected tally
+            # change current leader and restart process
+            self.change_current_leader()
+
+
 
     """ Gets the results of a quest. Passes possesion of the leader to the next person. """
     def quest(self):
         # TODO
-        self.current_leader = (self.current_leader + 1) % self.num_players
+        pass
+        
 
+    def change_current_leader(self):
+        self.current_leader = (self.current_leader + 1) % self.num_players
 
     """ Heuristics for Minions of Mordred 
 
