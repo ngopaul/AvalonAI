@@ -128,11 +128,6 @@ class Avalon:
         # TODO
         self.current_leader = (self.current_leader + 1) % self.num_players
 
-    def print_help(self):
-        # TODO
-        pass
-
-
 
     """ Heuristics for Minions of Mordred 
 
@@ -140,8 +135,9 @@ class Avalon:
 
     """
 
-    # Vote through an to-fail quest
-    def mm_vote_to_fail(self):
+    # Vote through a to-fail quest, or against a to-win quest
+    # This is weighted more heavily when the quest turns the tide (i.e. GOOD/bad is about to win)
+    def mm_vote(self, player, quest_num):
         pass
 
     """ Heuristics for Servants of Arthur 
@@ -150,13 +146,26 @@ class Avalon:
 
     """
 
-    # Vote against a to-fail quest
-    def sa_vote_against_fail(self):
+    # Vote against a to-fail quest, or for a to-win quest
+    # This is weighted more heavily when the quest turns the tide (i.e. good/BAD is about to win)
+    def sa_vote(self, player, quest_num):
         pass
 
+    # Merlin is the first to vote against a bad person on a quest
+    def sa_merlin_predicts(self, player, other):
+        pass
+
+    # Merlin starts trusting someone who is good,
+    # when previously they were pretending to not trust the person
+    def sa_merlin_change_of_heart(self, player, other):
+        pass
 
 a = Avalon()
 user_input = ""
+
+def print_help():
+    # TODO
+    pass
 
 while (a.game_state > 1):
     user_input = input("Command (type help for commands): ")
@@ -168,3 +177,4 @@ while (a.game_state > 1):
         a.accuse()
     if (user_input == "vote" or user_input == "v"):
         a.vote()
+
