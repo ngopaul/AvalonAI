@@ -171,9 +171,9 @@ class Avalon:
         print("Propose your team!")
         satisfied = False
         proposed_team = []
-        current_mission = size(self.quest_history)
-        for i in range(self.people_per_quest[current_mission]):
-            added_player = int(input("Pick player", i, "for Mission", current_mission))
+        current_quest = size(self.quest_history)
+        for i in range(self.people_per_quest[current_quest]):
+            added_player = int(input("Pick player", i, "for Quest", current_quest))
             proposed_team.append(added_player)
         self.propose_history.append(proposed_team)
         answer = input("Are you satisfied with this team? Yes (Y) or No (N)?")
