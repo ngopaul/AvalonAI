@@ -19,4 +19,12 @@ CREATE TABLE people_per_quest AS
     SELECT 9, 3, 4, 4, 5, 5 UNION
     SELECT 10, 3, 4, 4, 5, 5;
 
+CREATE TABLE required_fails_per_quest AS
+    SELECT 5 as num_players, 1 as quest_1, 1 as quest_2, 1 as quest_3, 1 as quest_4, 1 as quest_5 UNION
+    SELECT 6, 1, 1, 1, 1, 1 UNION
+    SELECT 7, 1, 1, 1, 2, 1 UNION
+    SELECT 8, 1, 1, 1, 2, 1 UNION
+    SELECT 9, 1, 1, 1, 2, 1 UNION
+    SELECT 10, 1, 1, 1, 2, 1;
+
 
