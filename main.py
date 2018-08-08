@@ -22,7 +22,7 @@ class Avalon:
             # 4: Morgana
             # 5: Mordred
             # 6: Oberon """
-        self.role_types = [0, 0, 0, 0, 0, 0, 0]
+        self.role_types = {'Normal Bad': 0, 'Normal Good': 0, 'Merlin': 0, 'Percival': 0, 'Morgana': 0, 'Mordred': 0, 'Oberon': 0}
 
         """ Varying variables that change throughout the game """
 
@@ -83,25 +83,35 @@ class Avalon:
     """ Initializes the game. """
     def initialize(self):
         self.num_players = int(input("Number of players: "))
-        self.role_types[0] = int(input("Normal Bad: "))
-        self.role_types[1] = int(input("Normal Good: "))
-        self.role_types[2] = int(input("Merlin: "))
-        self.role_types[3] = int(input("Percival: "))
-        self.role_types[4] = int(input("Morgana: "))
-        self.role_types[5] = int(input("Mordred: "))
-        self.role_types[6] = int(input("Oberon: "))
+        self.role_types['Normal Bad'] = int(input("Normal Bad: "))
+        self.role_types['Normal Good'] = int(input("Normal Good: "))
+        self.role_types['Merlin'] = int(input("Merlin: "))
+        self.role_types['Percival'] = int(input("Percival: "))
+        self.role_types['Morgana'] = int(input("Morgana: "))
+        self.role_types['Mordred'] = int(input("Mordred: "))
+        self.role_types['Oberon'] = int(input("Oberon: "))
         
         print("Initializing databases...")
         conn = sqlite3.connect("avalon.db")
         c = conn.cursor()
         self.executeScriptsFromFile("avalon.sql", c)
-        self.query_database(c)
+        self.check_parameters(c)
 
-    def query_database(self, c):
+    def check_parameters(self, c):
         c.execute("SELECT * FROM player_alignment")
         rows = c.fetchall()
-        for row in rows:
-            print(row)
+        if 5 >= self.num_players <= 10:
+            print("Avalon requires at least 5 players and at most 10 players!")
+            self.initialize()
+        else: 
+            num_good = self.role_types['Normal Good']
+            num_bad = self.role_types['Normal Bad']
+            for row in rows:
+                if row[0] == self.num_players:
+                    if row[1] == num_good and row[2] == num_bad:
+                        print("WOOHOO!")
+                    else:
+                        print("For ", self.num_players, " players, you must have ", num_good, " good guys ", " and ", num_bad, " bad guys.")
 
 
     """ One player accuses another of being evil, or being a specific role. """
