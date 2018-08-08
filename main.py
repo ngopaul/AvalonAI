@@ -100,18 +100,18 @@ class Avalon:
     def check_parameters(self, c):
         c.execute("SELECT * FROM player_alignment")
         rows = c.fetchall()
-        if 5 >= self.num_players <= 10:
+        if not (5 >= self.num_players <= 10):
             print("Avalon requires at least 5 players and at most 10 players!")
             self.initialize()
         else: 
-            num_good = self.role_types['Normal Good']
-            num_bad = self.role_types['Normal Bad']
+            num_good = self.role_types['Normal Good'] + self.role_types['Merlin'] + self.role_types['Percival']
+            num_bad = self.role_types['Normal Bad'] + self.role_types['Morgana'] + self.role_types['Mordred'] + self.role_types['Oberon']
             for row in rows:
                 if row[0] == self.num_players:
                     if row[1] == num_good and row[2] == num_bad:
                         print("WOOHOO!")
                     else:
-                        print("For ", self.num_players, " players, you must have ", num_good, " good guys ", " and ", num_bad, " bad guys.")
+                        print("For", self.num_players, "players, you must have", row[1], "good guys and", row[2], "bad guys.")
 
 
     """ One player accuses another of being evil, or being a specific role. """
