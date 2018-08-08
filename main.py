@@ -170,9 +170,9 @@ class Avalon:
         # TODO
         print("Propose your team!")
         proposed_team = []
-        current_quest = size(self.quest_history)
+        current_quest = len(self.quest_history)
         for i in range(self.people_per_quest[current_quest]):
-            added_player = int(input("Pick player", i, "for Quest", current_quest))
+            added_player = int(input("Pick player " + str(i) + " for Quest " + str(current_quest)))
             proposed_team.append(added_player)
         self.propose_history.append(proposed_team)
         answer = input("Are you satisfied with this team? Yes (Y) or No (N)?")
@@ -198,7 +198,7 @@ class Avalon:
                 rejected_counts += 1
             vote_list.append(choice)
         self.vote_history.append(vote_list)
-        if accepted_counts > rejected_counts:
+        if approved_counts > rejected_counts:
             self.quest_state[5] = 0 # Reset rejected tally
             self.quest()
         else:
