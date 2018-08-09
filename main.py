@@ -146,19 +146,18 @@ class Avalon:
         print("Let the game begin!\n")
 
     def check_parameters(self, c):
-        c.execute("SELECT * FROM player_alignment")
-        rows = c.fetchall()
+        c.execute("SELECT * FROM player_alignment WHERE num_players = " + str(self.num_players))
+        row = c.fetchall()[0]
         num_good = self.role_types['Normal Good'] + self.role_types['Merlin'] + self.role_types['Percival']
         num_bad = self.role_types['Normal Bad'] + self.role_types['Morgana'] + self.role_types['Mordred'] + self.role_types['Oberon']
-        for row in rows:
-            if row[0] == self.num_players:
-                if not (row[1] == num_good and row[2] == num_bad):
-                    print("For", self.num_players, "players, you must have", row[1], "good guys and", row[2], "bad guys.")
+        if not (row[1] == num_good and row[2] == num_bad):
+            print("For", self.num_players, "players, you must have", row[1], "good guys and", row[2], "bad guys.")
 
     def load_info(self, c):
         c.execute("SELECT * FROM people_per_quest WHERE num_players = " + str(self.num_players))
-        people_per_quest = c.fetchall()[0]
-        self.people_per_quest = [i for i in people_per_quest[1:]]
+        row = c.fetchall()[0]
+        self.people_per_quest = [i for i in row[1:]]
+        print(self.people_per_quest)
 
     """ One player accuses another of being evil, or being a specific role. """
     def accuse(self):
