@@ -148,6 +148,7 @@ class Avalon:
     def check_parameters(self, c):
         c.execute("SELECT * FROM player_alignment WHERE num_players = " + str(self.num_players))
         row = c.fetchall()[0]
+        print(row)
         num_good = self.role_types['Normal Good'] + self.role_types['Merlin'] + self.role_types['Percival']
         num_bad = self.role_types['Normal Bad'] + self.role_types['Morgana'] + self.role_types['Mordred'] + self.role_types['Oberon']
         if not (row[1] == num_good and row[2] == num_bad):
