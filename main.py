@@ -40,7 +40,7 @@ class Avalon:
             # 0 : Minions of Mordred win
             # 1 : Servants of Arthur win
             # 2 : Servants of Arthur won, but Minions of Mordred still choose to assassinate
-            # 3 : Game in progress """
+            # 3 : Game in progress  """
         self.game_state = 3
         """ Number of Players:
             # The number of players playing """
