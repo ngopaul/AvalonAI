@@ -69,6 +69,7 @@ class Avalon:
         """ People per Quest: 
             # The number of people on each quest """
         self.people_per_quest = [0, 0, 0, 0, 0]
+        self.required_fails_per_quest = [0, 0, 0, 0, 0]
         """ Propose History:
             # List of proposals. Each proposal is a list of people in the proposal. Some proposals may not even
             # Make it to the voting stage; all this means is that VOTE_HISTORY is empty at that index. """
@@ -158,7 +159,10 @@ class Avalon:
         c.execute("SELECT * FROM people_per_quest WHERE num_players = " + str(self.num_players))
         row = c.fetchall()[0]
         self.people_per_quest = [i for i in row[1:]]
-        print(self.people_per_quest)
+        c.execute("SELECT * FROM required_fails_per_quest WHERE num_players = " + str(self.num_players))
+        c.execute("SELECT * FROM people_per_quest WHERE num_players = " + str(self.num_players))
+        row = c.fetchall()[0]
+        self.required_fails_per_quest = [i for i in row[1:]]
 
     """ One player accuses another of being evil, or being a specific role. """
     def accuse(self):
@@ -222,10 +226,14 @@ class Avalon:
                 fail += 1
             else:
                 success += 1
-        self.go_quest(len(self.propose_history) - 1, int(fail == 0), fail, success)
+        self.go_quest(len(self.propose_history) - 1, int(fail < self.required_fails_per_quest[self.cur_quest()]), fail, success)
         self.change_current_leader()
         
-        
+    def cur_quest(self):
+        return len(self.quest_history)
+
+    def go_quest(self, propose_index, result, fails, successes):
+        self.quest_history.append([propose_index, result, fails, successes])
 
     def change_current_leader(self):
         self.current_leader = (self.current_leader + 1) % self.num_players
