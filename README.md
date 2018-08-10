@@ -10,7 +10,6 @@ TODO:
 - add the command "KNOWN"
 - add heuristics for Minions of Mordred
 - add heuristics for Servants of Arthur
-<<<<<<< HEAD
 
 - after making the basic voting heurisitics, we need to test out the AI on a real game!
     - we'll be able to find bugs and see how well our most basic heuristic works
@@ -25,5 +24,3 @@ We will have several main stages (not in any particular order right now) to narr
 - Analyze pairs of players. Oftentimes (will have to do more research) players on the same team who know who each other are, will vote similarly (but not necessarily ACT similarly). These pairs can be both good and both bad pairs, but are more often bad because they know who each other are.
 - Use KNOWN_PLAYERS. Factor the player type of one of the players into account, reducing computation by a factor.
 
-=======
->>>>>>> f4f9d08e3cffd803a36117ac7923e3d4ec477300
