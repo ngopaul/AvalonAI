@@ -187,11 +187,15 @@ class Avalon:
     """ The current leader proposes a team. """
     def propose_team(self):
         print("Propose your team!")
-        proposed_team = []
-        current_quest = len(self.quest_history)
-        for i in range(self.people_per_quest[current_quest]):
-            added_player = sanitised_input("Pick player " + str(i) + " for Quest " + str(current_quest) + ": ", int, max_=self.num_players - 1)
-            proposed_team.append(added_player)
+        proposed_team, current_quest = [], len(self.quest_history)
+        max_people, num_people = self.people_per_quest[current_quest], 1
+        while num_people <= max_people:
+            added_player = sanitised_input("Choose team member " + str(num_people) + " for Quest " + str(current_quest) + ": ", int, max_=self.num_players - 1)
+            if added_player in proposed_team:
+                print("Player", added_player, "is already chosen to be on the quest.")
+            else:
+                proposed_team.append(added_player)
+                num_people += 1
         self.propose_history.append(proposed_team)
         answer = input("Proceed to vote? Yes (y) or No (n)? ")
         if answer.lower() == "y":
@@ -309,4 +313,3 @@ while (a.game_state > 1):
         a.force_vote()
     elif (user_input == "break" or user_input == "quit"):
         break
-
