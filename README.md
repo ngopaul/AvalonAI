@@ -11,6 +11,8 @@ TODO:
 - add heuristics for Minions of Mordred
 - add heuristics for Servants of Arthur
 
+- WRITE A TON OF TESTS
+
 - after making the basic voting heurisitics, we need to test out the AI on a real game!
     - we'll be able to find bugs and see how well our most basic heuristic works
 

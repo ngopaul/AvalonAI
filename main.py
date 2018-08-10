@@ -2,6 +2,8 @@
 import sqlite3
 from sqlite3 import OperationalError
 
+# INSTALL PYTEST IN ORDER TO RUN TESTER FUNCTIONS
+
 """ Utilities """
 # @StackOverflow Community
 def sanitised_input(prompt, type_=None, min_=None, max_=None, range_=None):
@@ -35,7 +37,7 @@ def sanitised_input(prompt, type_=None, min_=None, max_=None, range_=None):
             return ui
 
 class Avalon:
-    def __init__(self):
+    def __init__(self, value):
         """ Game States:
             # 0 : Minions of Mordred win
             # 1 : Servants of Arthur win
@@ -90,7 +92,12 @@ class Avalon:
             # the values are the role types, as above. """
         self.known_players = []
 
-        self.initialize()
+        if value == 0: #if you want to preset-initialize
+            useIn = input("Welcome to Avalon AI! Press enter to continue. ")
+            if useIn == "skip":
+                self.initialize(5, {'Normal Bad': 2, 'Normal Good': 3, 'Merlin': 0, 'Percival': 0, 'Morgana': 0, 'Mordred': 0, 'Oberon': 0})
+            else:
+                self.initialize()
 
     """ Allows us to read in SQL files. """
     def executeScriptsFromFile(self, filename, c):
@@ -113,9 +120,8 @@ class Avalon:
                 print("Command skipped: ", msg)
 
     """ Initializes the game. """
-    def initialize(self):
-        useIn = input("Welcome to Avalon AI! Press enter to continue. ")
-        if useIn != "skip":
+    def initialize(self, numplayers = 0, roletypes = {}):
+        if roletypes == {}:
             self.num_players = sanitised_input("Number of Players: ", int, 5, 10)
             self.role_types['Normal Bad'] = sanitised_input("Normal Bad: ", int)
             self.role_types['Normal Good'] = sanitised_input("Normal Good: ", int)
@@ -135,10 +141,9 @@ class Avalon:
             print("Initialized databases.")
             
             self.current_leader = sanitised_input("Starting leader: ", int, max_= self.num_players - 1)
-        elif useIn == "skip":
-            self.num_players = 5
-            self.role_types['Normal Bad'] = 2
-            self.role_types['Normal Good'] = 3
+        else:
+            self.num_players = numplayers
+            self.role_types = roletypes
             self.known_players = [-1 for i in range(self.num_players)]
             conn = sqlite3.connect("avalon.db")
             c = conn.cursor()
@@ -202,7 +207,6 @@ class Avalon:
             self.vote()
         else:
             self.vote_history.append([]) #Empty entry
-            self.quest_state[5] += 1
             return
 
     """ The players vote on the most recently proposed team. If rejected, adds to the rejected tally. """
@@ -220,13 +224,14 @@ class Avalon:
             self.quest_state[5] = 0 # Reset rejected tally
             self.quest()
         else:
-            self.quest_state[5] = self.quest_state[5] + 1 # Increment rejected tally
+            self.quest_state[5] += 1 # Increment rejected tally
             self.change_current_leader()
             return
 
     """ We said we didn't want to vote after the proposal... but we did want to """
     def force_vote(self):
         self.quest_state[5] -= 1
+        del self.vote_history[-1]
         self.vote()
 
     """ Gets the results of a quest. Passes possesion of the leader to the next person. """
@@ -289,27 +294,33 @@ class Avalon:
     def sa_merlin_change_of_heart(self, player, other):
         pass
 
-a = Avalon()
-user_input = ""
-
 def print_help():
     print("printall or pa;", "proposeteam or pt;", "accuse or ac;", "forcevote or fv;", "break")
 
-while (a.game_state > 1):
-    user_input = input("Command (type help for commands): ")
-    if (user_input == "help"):
-        print_help()
-    elif (user_input == "printall" or user_input == "pa"):
-        a.print_all()
-    elif (user_input == "proposeteam" or user_input == "pt"):
-        if not (a.quest_state[4] > -1):
-            a.propose_team()
-        else:
-            print("Five quests have already been completed!")
-    elif (user_input == "accuse" or user_input == "ac"):
-        a.accuse()
-    elif (user_input == "forcevote" or user_input == "fv"):
-        print("I hope you know what you're doing! Voting the previous proposal...")
-        a.force_vote()
-    elif (user_input == "break" or user_input == "quit"):
-        break
+# comment copied from stackoverflow @Tamás
+""" Some explanation here: __name__ is a special Python variable that holds the name
+ of the module currently being executed, except when the module is started from the 
+ command line, in which case it becomes "__main__". """
+# I'm doing this so we can run tests in test.py, without triggering
+#   the creation of an Avalon object unnecessarily
+
+if __name__ == '__main__':
+    a = Avalon(0)
+    while (a.game_state > 1):
+        user_input = input("Command (type help for commands): ")
+        if (user_input == "help"):
+            print_help()
+        elif (user_input == "printall" or user_input == "pa"):
+            a.print_all()
+        elif (user_input == "proposeteam" or user_input == "pt"):
+            if not (a.quest_state[4] > -1):
+                a.propose_team()
+            else:
+                print("Five quests have already been completed!")
+        elif (user_input == "accuse" or user_input == "ac"):
+            a.accuse()
+        elif (user_input == "forcevote" or user_input == "fv"):
+            print("I hope you know what you're doing! Voting the previous proposal...")
+            a.force_vote()
+        elif (user_input == "break" or user_input == "quit"):
+            break
