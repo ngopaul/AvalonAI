@@ -1,5 +1,10 @@
 # AVALON AI
 
+FILE STRUCTURE:
+- main.py holds the Avalon object and the main loop to play the game
+- analysis.py holds the heuristics and analyzes who is who in the game
+- test.py uses pyautogui to test the game
+
 TODO:
 
 (DONE) disallow putting in duplicates of a person on a quest

@@ -1,6 +1,7 @@
 # This is the main file for Avalon AI inputs.
 import sqlite3
 from sqlite3 import OperationalError
+from analysis import start_analysis, analyze
 
 # INSTALL PYTEST IN ORDER TO RUN TESTER FUNCTIONS
 
@@ -263,37 +264,6 @@ class Avalon:
     def change_current_leader(self):
         self.current_leader = (self.current_leader + 1) % self.num_players
 
-    """ Heuristics for Minions of Mordred 
-
-    Please write out the strategies that you think are valid for Minions, i.e. what would a minion do?
-
-    """
-
-    # Vote through a to-fail quest, or against a to-win quest
-    # This is weighted more heavily when the quest turns the tide (i.e. GOOD/bad is about to win)
-    def mm_vote(self, player, quest_num):
-        pass
-
-    """ Heuristics for Servants of Arthur 
-
-    Please write out the strategies that you think are valid for Servants, i.e. what would a servant do?
-
-    """
-
-    # Vote against a to-fail quest, or for a to-win quest
-    # This is weighted more heavily when the quest turns the tide (i.e. good/BAD is about to win)
-    def sa_vote(self, player, quest_num):
-        pass
-
-    # Merlin is the first to vote against a bad person on a quest
-    def sa_merlin_predicts(self, player, other):
-        pass
-
-    # Merlin starts trusting someone who is good,
-    # when previously they were pretending to not trust the person
-    def sa_merlin_change_of_heart(self, player, other):
-        pass
-
 def print_help():
     print("printall or pa;", "proposeteam or pt;", "accuse or ac;", "forcevote or fv;", "break")
 
@@ -306,7 +276,9 @@ def print_help():
 
 if __name__ == '__main__':
     a = Avalon(0)
+    start_analysis(a)
     while (a.game_state > 1):
+        analyze(a)
         user_input = input("Command (type help for commands): ")
         if (user_input == "help"):
             print_help()
