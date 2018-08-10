@@ -146,6 +146,7 @@ class Avalon:
             self.load_info(c)
         print("Let the game begin!\n")
 
+    """ SQL helper. Checks if initialization is valid. """
     def check_parameters(self, c):
         c.execute("SELECT * FROM player_alignment WHERE num_players = " + str(self.num_players))
         row = c.fetchall()[0]
@@ -155,6 +156,7 @@ class Avalon:
         if not (row[1] == num_good and row[2] == num_bad):
             print("For", self.num_players, "players, you must have", row[1], "good guys and", row[2], "bad guys.")
 
+    """ SQL helper. Loads into instance variables. """
     def load_info(self, c):
         c.execute("SELECT * FROM people_per_quest WHERE num_players = " + str(self.num_players))
         row = c.fetchall()[0]
@@ -163,6 +165,7 @@ class Avalon:
         row = c.fetchall()[0]
         self.required_fails_per_quest = [i for i in row[1:]]
 
+    """ For diagnostics """
     def print_all(self):
         print("Game state:", self.game_state)
         print("Number of players:", self.num_players)
@@ -170,6 +173,7 @@ class Avalon:
         print("Propose history:", self.propose_history)
         print("Vote history:", self.vote_history)
         print("Quest state:", self.quest_state)
+        print("Quest history:", self.quest_history)
         print("Known Players:", self.known_players)
 
     """ One player accuses another of being evil, or being a specific role. """
@@ -197,9 +201,6 @@ class Avalon:
             self.vote_history.append([]) #Empty entry
             self.quest_state[5] += 1
             return
-
-
-
 
     """ The players vote on the most recently proposed team. If rejected, adds to the rejected tally. """
     def vote(self):
@@ -229,7 +230,7 @@ class Avalon:
     def quest(self):
         print("Quest Initiated!")
         votes = []
-        cur_quest = self.cur_quest
+        cur_quest = self.cur_quest()
         for i in range(self.people_per_quest[self.cur_quest()]):
             votes.append(sanitised_input("Result " + str(i) + " is success (1) or fail (0): ", int, 0, 1))
         fail = 0
@@ -239,7 +240,7 @@ class Avalon:
                 fail += 1
             else:
                 success += 1
-        quest_result = int(fail < self.required_fails_per_quest[cur_quest()])
+        quest_result = int(fail < self.required_fails_per_quest[cur_quest])
         self.go_quest(len(self.propose_history) - 1, quest_result, fail, success)
         self.quest_state[cur_quest] = quest_result
         self.quest_state[5] = 0
@@ -298,7 +299,7 @@ while (a.game_state > 1):
     elif (user_input == "printall" or user_input == "pa"):
         a.print_all()
     elif (user_input == "proposeteam" or user_input == "pt"):
-        if a.quest_state[4] > -1:
+        if not (a.quest_state[4] > -1):
             a.propose_team()
         else:
             print("Five quests have already been completed!")
@@ -307,6 +308,6 @@ while (a.game_state > 1):
     elif (user_input == "forcevote" or user_input == "fv"):
         print("I hope you know what you're doing! Voting the previous proposal...")
         a.force_vote()
-    elif (user_input == "break"):
+    elif (user_input == "break" or user_input == "quit"):
         break
 
