@@ -91,7 +91,6 @@ class Avalon:
         self.known_players = []
 
         self.initialize()
-       
 
     """ Allows us to read in SQL files. """
     def executeScriptsFromFile(self, filename, c):
@@ -220,7 +219,7 @@ class Avalon:
             self.quest_state[5] = self.quest_state[5] + 1 # Increment rejected tally
             self.change_current_leader()
             return
-    
+
     """ We said we didn't want to vote after the proposal... but we did want to """
     def force_vote(self):
         self.quest_state[5] -= 1
@@ -245,7 +244,7 @@ class Avalon:
         self.quest_state[cur_quest] = quest_result
         self.quest_state[5] = 0
         self.change_current_leader()
-        
+
     def cur_quest(self):
         return len(self.quest_history)
 
