@@ -160,9 +160,17 @@ class Avalon:
         row = c.fetchall()[0]
         self.people_per_quest = [i for i in row[1:]]
         c.execute("SELECT * FROM required_fails_per_quest WHERE num_players = " + str(self.num_players))
-        c.execute("SELECT * FROM people_per_quest WHERE num_players = " + str(self.num_players))
         row = c.fetchall()[0]
         self.required_fails_per_quest = [i for i in row[1:]]
+
+    def print_all(self):
+        print("Game state:", self.game_state)
+        print("Number of players:", self.num_players)
+        print("Roles:", self.role_types)
+        print("Propose history:", self.propose_history)
+        print("Vote history:", self.vote_history)
+        print("Quest state:", self.quest_state)
+        print("Known Players:", self.known_players)
 
     """ One player accuses another of being evil, or being a specific role. """
     def accuse(self):
@@ -187,6 +195,7 @@ class Avalon:
             self.vote()
         else:
             self.vote_history.append([]) #Empty entry
+            self.quest_state[5] += 1
             return
 
 
@@ -210,13 +219,17 @@ class Avalon:
             self.quest_state[5] = self.quest_state[5] + 1 # Increment rejected tally
             self.change_current_leader()
             return
-
-
+    
+    """ We said we didn't want to vote after the proposal... but we did want to """
+    def force_vote(self):
+        self.quest_state[5] -= 1
+        self.vote()
 
     """ Gets the results of a quest. Passes possesion of the leader to the next person. """
     def quest(self):
         print("Quest Initiated!")
         votes = []
+        cur_quest = self.cur_quest
         for i in range(self.people_per_quest[self.cur_quest()]):
             votes.append(sanitised_input("Result " + str(i) + " is success (1) or fail (0): ", int, 0, 1))
         fail = 0
@@ -226,7 +239,10 @@ class Avalon:
                 fail += 1
             else:
                 success += 1
-        self.go_quest(len(self.propose_history) - 1, int(fail < self.required_fails_per_quest[self.cur_quest()]), fail, success)
+        quest_result = int(fail < self.required_fails_per_quest[cur_quest()])
+        self.go_quest(len(self.propose_history) - 1, quest_result, fail, success)
+        self.quest_state[cur_quest] = quest_result
+        self.quest_state[5] = 0
         self.change_current_leader()
         
     def cur_quest(self):
@@ -273,19 +289,24 @@ a = Avalon()
 user_input = ""
 
 def print_help():
-    # TODO
-    pass
+    print("printall or pa;", "proposeteam or pt;", "accuse or ac;", "forcevote or fv;", "break")
 
 while (a.game_state > 1):
     user_input = input("Command (type help for commands): ")
     if (user_input == "help"):
         print_help()
-    if (user_input == "proposeteam" or user_input == "pt"):
-        a.propose_team()
-    if (user_input == "accuse" or user_input == "ac"):
+    elif (user_input == "printall" or user_input == "pa"):
+        a.print_all()
+    elif (user_input == "proposeteam" or user_input == "pt"):
+        if a.quest_state[4] > -1:
+            a.propose_team()
+        else:
+            print("Five quests have already been completed!")
+    elif (user_input == "accuse" or user_input == "ac"):
         a.accuse()
-    if (user_input == "vote" or user_input == "v"):
-        a.vote()
-    if (user_input == "break"):
+    elif (user_input == "forcevote" or user_input == "fv"):
+        print("I hope you know what you're doing! Voting the previous proposal...")
+        a.force_vote()
+    elif (user_input == "break"):
         break
 
