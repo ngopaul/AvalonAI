@@ -92,6 +92,12 @@ class Avalon:
             # list of size NUM_PLAYERS, where each index correlates to the player number
             # the values are the role types, as above. """
         self.known_players = []
+        """ Accusations:
+            # important data for higher level heuristics; who accused who of being evil?
+            # we need some way to filter bad or fake accusations
+            # Each player (index in list) gets a list of accusations. The accusations are pairs of
+            # times (location in proposal array) """ 
+        self.accusations = []
 
         if value == 0: #if you want to preset-initialize
             useIn = input("Welcome to Avalon AI! Press enter to continue. ")
@@ -121,7 +127,7 @@ class Avalon:
                 print("Command skipped: ", msg)
 
     """ Initializes the game. """
-    def initialize(self, numplayers = 0, roletypes = {}):
+    def initialize(self, numplayers = 0, roletypes = {}, currentleader = 0):
         if roletypes == {}:
             self.num_players = sanitised_input("Number of Players: ", int, 5, 10)
             self.role_types['Normal Bad'] = sanitised_input("Normal Bad: ", int)
@@ -131,24 +137,22 @@ class Avalon:
             self.role_types['Morgana'] = sanitised_input("Morgana: ", int)
             self.role_types['Mordred'] = sanitised_input("Mordred: ", int)
             self.role_types['Oberon'] = sanitised_input("Oberon: ", int)
-            self.known_players = [-1 for i in range(self.num_players)]
-
-            print("Initializing databases...")
-            conn = sqlite3.connect("avalon.db")
-            c = conn.cursor()
-            self.executeScriptsFromFile("avalon.sql", c)
-            self.check_parameters(c)
-            self.load_info(c)
-            print("Initialized databases.")
-            
             self.current_leader = sanitised_input("Starting leader: ", int, max_= self.num_players - 1)
         else:
             self.num_players = numplayers
             self.role_types = roletypes
-            self.known_players = [-1 for i in range(self.num_players)]
-            conn = sqlite3.connect("avalon.db")
-            c = conn.cursor()
-            self.load_info(c)
+            self.current_leader = currentleader
+        
+        self.accusations = [[] for i in range(self.num_players)]
+        self.known_players = [-1 for i in range(self.num_players)]
+        print("Initializing databases...")
+        conn = sqlite3.connect("avalon.db")
+        c = conn.cursor()
+        self.executeScriptsFromFile("avalon.sql", c)
+        self.check_parameters(c)
+        self.load_info(c)
+        print("Initialized databases.\n")
+
         print("Let the game begin!\n")
 
     """ SQL helper. Checks if initialization is valid. """
@@ -183,8 +187,13 @@ class Avalon:
 
     """ One player accuses another of being evil, or being a specific role. """
     def accuse(self):
-        # TODO
-        pass
+        player_accusing = sanitised_input("Who accused? ", int, 0, self.num_players - 1)
+        player_accused = sanitised_input("Accusing who? ", int, 0, self.num_players)
+        self.accusations[player_accusing].append([self.current_time, player_accused])
+
+    """ Returns the index of the last item in proposal array. """
+    def current_time(self):
+        return len(self.propose_history) - 1
 
     """ The person using the AI knows the alignment of a player. """
     def known(self):

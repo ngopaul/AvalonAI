@@ -17,7 +17,7 @@ def test1():
     a = Avalon(1) # don't preset-initialize
     # 5 people, with Merlin and Mordred
     # this games simulates Merlin as player 2, Morgana as 3, and Normal Evil as 4
-    a.initialize(5, {'Normal Bad': 1, 'Normal Good': 2, 'Merlin': 1, 'Percival': 0, 'Morgana': 0, 'Mordred': 1, 'Oberon': 0})
+    a.initialize(5, {'Normal Bad': 1, 'Normal Good': 2, 'Merlin': 1, 'Percival': 0, 'Morgana': 0, 'Mordred': 1, 'Oberon': 0}, 0)
     
     # propose a team with players 0, 1
     typewrite("1\n0\n")
