@@ -127,3 +127,6 @@ def create_possibilities(a):
         return rtn + ");"
     else:
         return rtn + " AND " + known_factor + ");"
+
+def passed_votes_history(a):
+    return [vote for vote in a.vote_history if vote.count(1) > vote.count(0)]

@@ -263,10 +263,10 @@ def print_help():
 
 if __name__ == '__main__':
     a = Avalon(0)
-    ana = Analysis()
-    ana.start_analysis(a)
+    ana = Analysis(a)
+    ana.start_analysis()
     while (a.game_state > 1):
-        ana.analyze(a)
+        ana.analyze()
         user_input = input("Command (type help for commands): ")
         if (user_input == "help"):
             print_help()
@@ -284,6 +284,8 @@ if __name__ == '__main__':
                     print("Five quests have already been completed!")
             elif (user_input == "accuse" or user_input == "ac"):
                 a.accuse()
+            elif (user_input == "trust" or user_input == "tr"):
+                a.trust()
             elif (user_input == "forcevote" or user_input == "fv"):
                 print("I hope you know what you're doing! Voting the previous proposal...")
                 a.force_vote()

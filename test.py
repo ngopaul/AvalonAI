@@ -110,10 +110,12 @@ def test1():
     # print(get_known_players(a))
     # print(create_possibilities(a))
     
-    # ana = Analysis()
-    # ana.start_analysis(a, True)
+    ana = Analysis(a)
+    ana.start_analysis()
+    ana.analyze()
+    print("Guess good/evil: ", ana.player_values)
 
-    a.print_all()
+    # a.print_all()
 
     assert a.game_state == 2 # the minions of mordred need to decide who the merlin is
 
