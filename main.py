@@ -1,41 +1,10 @@
 # This is the main file for Avalon AI inputs.
 import sqlite3
 from sqlite3 import OperationalError
-from analysis import start_analysis, analyze
+from utils import *
+from analysis import Analysis
 
 # INSTALL PYTEST IN ORDER TO RUN TESTER FUNCTIONS
-
-""" Utilities """
-# @StackOverflow Community
-def sanitised_input(prompt, type_=None, min_=None, max_=None, range_=None):
-    if min_ is not None and max_ is not None and max_ < min_:
-        raise ValueError("min_ must be less than or equal to max_.")
-    while True:
-        ui = input(prompt)
-        if type_ is not None:
-            try:
-                ui = type_(ui)
-            except ValueError:
-                print("Input type must be {0}.".format(type_.__name__))
-                continue
-        if max_ is not None and ui > max_:
-            print("Input must be less than or equal to {0}.".format(max_))
-        elif min_ is not None and ui < min_:
-            print("Input must be greater than or equal to {0}.".format(min_))
-        elif range_ is not None and ui not in range_:
-            if isinstance(range_, range):
-                template = "Input must be between {0.start} and {0.stop}."
-                print(template.format(range_))
-            else:
-                template = "Input must be {0}."
-                if len(range_) == 1:
-                    print(template.format(*range_))
-                else:
-                    print(template.format(" or ".join((", ".join(map(str,
-                                                                     range_[:-1])),
-                                                       str(range_[-1])))))
-        else:
-            return ui
 
 class Avalon:
     def __init__(self, value):
@@ -106,26 +75,6 @@ class Avalon:
             else:
                 self.initialize()
 
-    """ Allows us to read in SQL files. """
-    def executeScriptsFromFile(self, filename, c):
-        # Open and read the file as a single buffer
-        fd = open(filename, 'r')
-        sqlFile = fd.read()
-        fd.close()
-
-        # all SQL commands (split on ';')
-        sqlCommands = sqlFile.split(';')
-
-        # Execute every command from the input file
-        for command in sqlCommands:
-            # This will skip and report errors
-            # For example, if the tables do not yet exist, this will skip over
-            # the DROP TABLE commands
-            try:
-                c.execute(command)
-            except OperationalError as msg:
-                print("Command skipped: ", msg)
-
     """ Initializes the game. """
     def initialize(self, numplayers = 0, roletypes = {}, currentleader = 0):
         if roletypes == {}:
@@ -148,7 +97,7 @@ class Avalon:
         print("Initializing databases...")
         conn = sqlite3.connect("avalon.db")
         c = conn.cursor()
-        self.executeScriptsFromFile("avalon.sql", c)
+        executeScriptsFromFile("avalon.sql", c)
         self.check_parameters(c)
         self.load_info(c)
         print("Initialized databases.\n")
@@ -198,6 +147,10 @@ class Avalon:
     """ The person using the AI knows the alignment of a player. """
     def known(self):
         self.known_players[input("Which person? ")] = input("Which role? ")
+
+    """ Command-Line Known command"""
+    def cl_known(self, player, role_num):
+        self.known_players[player] = role_num
 
     """ The current leader proposes a team. """
     def propose_team(self):
@@ -285,9 +238,10 @@ def print_help():
 
 if __name__ == '__main__':
     a = Avalon(0)
-    start_analysis(a)
+    ana = Analysis()
+    ana.start_analysis(a)
     while (a.game_state > 1):
-        analyze(a)
+        ana.analyze(a)
         user_input = input("Command (type help for commands): ")
         if (user_input == "help"):
             print_help()

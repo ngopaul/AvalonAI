@@ -1,4 +1,6 @@
-from main import *
+from main import Avalon
+from utils import *
+from analysis import *
 import os
 import subprocess as sub
 from pyautogui import press, typewrite, hotkey
@@ -98,10 +100,24 @@ def test1():
     typewrite("1\n1\n1\n")
     a.propose_team()
 
+
+    # a.cl_known(2, 2) # player 2, is merlin
+    # a.cl_known(0, 1)
+    # a.cl_known(1, 1)
+
+
+    print(get_all_players(a))
+    print(get_known_players(a))
+    print(create_possibilities(a))
+    
+    ana = Analysis()
+    ana.start_analysis(a, True)
+
     assert a.game_state == 2 # the minions of mordred need to decide who the merlin is
 
     # guess the merlin right!
     typewrite("2")
+    typewrite("y")
     a.propose_merlin()
 
     assert a.game_state == 0
