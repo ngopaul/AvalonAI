@@ -216,6 +216,18 @@ class Avalon:
         self.quest_state[cur_quest] = quest_result
         self.quest_state[5] = 0
         self.change_current_leader()
+        print("Quest result: " + ("good" if quest_result else "bad"))
+        if self.quest_state[:-1].count(0) >= 3:
+            self.game_state = 0 # Bad guys win
+        if self.quest_state[:-1].count(1) >= 3:
+            self.game_state = 2 # Bad guys have a chance to guess merlin
+
+    def guess_merlin(self):
+        guess = sanitised_input("Who do you think is Merlin? ", int, 0, self.num_players - 1)
+        if (self.known_players[guess] == 2 or sanitised_input("Who is actually Merlin? ", int, 0, self.num_players - 1) == guess):
+            self.game_state = 0
+        else:
+            self.game_state = 1
 
     def cur_quest(self):
         return len(self.quest_history)
@@ -247,15 +259,22 @@ if __name__ == '__main__':
             print_help()
         elif (user_input == "printall" or user_input == "pa"):
             a.print_all()
-        elif (user_input == "proposeteam" or user_input == "pt"):
-            if not (a.quest_state[4] > -1):
-                a.propose_team()
-            else:
-                print("Five quests have already been completed!")
-        elif (user_input == "accuse" or user_input == "ac"):
-            a.accuse()
-        elif (user_input == "forcevote" or user_input == "fv"):
-            print("I hope you know what you're doing! Voting the previous proposal...")
-            a.force_vote()
         elif (user_input == "break" or user_input == "quit"):
             break
+        elif (user_input == "guessmerlin" or "gm"):
+            a.guess_merlin()
+        elif a.game_state != 2: # If not! bad guys guess Merlin
+            if (user_input == "proposeteam" or user_input == "pt"):
+                if not (a.quest_state[4] > -1):
+                    a.propose_team()
+                else:
+                    print("Five quests have already been completed!")
+            elif (user_input == "accuse" or user_input == "ac"):
+                a.accuse()
+            elif (user_input == "forcevote" or user_input == "fv"):
+                print("I hope you know what you're doing! Voting the previous proposal...")
+                a.force_vote()
+    if a.game_state == 0:
+        print("Minions have won!")
+    else:
+        print("Servants have won!")

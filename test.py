@@ -106,18 +106,22 @@ def test1():
     # a.cl_known(1, 1)
 
 
-    print(get_all_players(a))
-    print(get_known_players(a))
-    print(create_possibilities(a))
+    # print(get_all_players(a))
+    # print(get_known_players(a))
+    # print(create_possibilities(a))
     
-    ana = Analysis()
-    ana.start_analysis(a, True)
+    # ana = Analysis()
+    # ana.start_analysis(a, True)
+
+    a.print_all()
 
     assert a.game_state == 2 # the minions of mordred need to decide who the merlin is
 
     # guess the merlin right!
-    typewrite("2")
-    typewrite("y")
-    a.propose_merlin()
+    typewrite("2\n") # guess
+    typewrite("2\n") # actual
+    a.guess_merlin()
 
     assert a.game_state == 0
+
+    print("All tests passed.")
