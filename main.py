@@ -61,12 +61,14 @@ class Avalon:
             # list of size NUM_PLAYERS, where each index correlates to the player number
             # the values are the role types, as above. """
         self.known_players = []
-        """ Accusations:
-            # important data for higher level heuristics; who accused who of being evil?
-            # we need some way to filter bad or fake accusations
-            # Each player (index in list) gets a list of accusations. The accusations are pairs of
-            # times (location in proposal array) """ 
-        self.accusations = []
+        """ Feelings :
+            # important data for higher level heuristics; who trusts or mistrusts who?
+            # we need some way to understand dupes
+            # Each player (index in list) gets a list of feelings. The first is a
+            # list of (trusted people, time trusted) pairs and the second is a list of 
+            # (mistrusted people, time mistrusted).
+            # aka: map {player_number > [ [(trusts, time)], [(mistrusts, time)] ]} """
+        self.feelings = {}
 
         if value == 0: #if you want to preset-initialize
             useIn = input("Welcome to Avalon AI! Press enter to continue. ")
@@ -137,8 +139,19 @@ class Avalon:
     """ One player accuses another of being evil, or being a specific role. """
     def accuse(self):
         player_accusing = sanitised_input("Who accused? ", int, 0, self.num_players - 1)
-        player_accused = sanitised_input("Accusing who? ", int, 0, self.num_players)
-        self.accusations[player_accusing].append([self.current_time, player_accused])
+        player_accused = sanitised_input("Accusing whom? ", int, 0, self.num_players)
+        if (not (player_accusing in self.feelings)):
+            self.feelings[player_accusing] = [[], [(self.current_time, player_accused)]]
+        else:
+            self.feelings[player_accusing][1].append((self.current_time, player_accused))
+        
+    def trust(self):
+        player_trusting = sanitised_input("Who trusts? ", int, 0, self.num_players - 1)
+        player_trusted = sanitised_input("Trusts whom? ", int, 0, self.num_players)
+        if (not (player_trusting in self.feelings)):
+            self.feelings[player_trusting] = [[(self.current_time, player_trusted)], []]
+        else:
+            self.feelings[player_trusting][0].append((self.current_time, player_trusted))
 
     """ Returns the index of the last item in proposal array. """
     def current_time(self):
