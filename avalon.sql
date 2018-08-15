@@ -2,6 +2,10 @@
 as the following one. However it executes properly with sqlite3. */
 
 /* how many good and bad based on number of people */
+DROP TABLE IF EXISTS player_alignment;
+DROP TABLE IF EXISTS people_per_quest;
+DROP TABLE IF EXISTS required_fails_per_quest;
+
 CREATE TABLE player_alignment AS
     SELECT 5 AS num_players, 3 AS num_good, 2 AS num_evil UNION
     SELECT 6, 4, 2 UNION

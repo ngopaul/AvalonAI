@@ -4,6 +4,7 @@ FILE STRUCTURE:
 - main.py holds the Avalon object and the main loop to play the game
 - analysis.py holds the heuristics and analyzes who is who in the game
 - test.py uses pyautogui to test the game
+- utils.py holds utility functions
 
 TODO:
 
@@ -15,7 +16,8 @@ The information that we have is very sparse. We try to apply heuristics to our p
 
 We will have several main stages (not in any particular order right now) to narrow our search to a manageable dataset (it is extremely nice to work with SQL here because of how it can manage filters):
 
-- Analyze the data with no special roles, just Minions and Servants.
-- Analyze pairs of players. Oftentimes (will have to do more research) players on the same team who know who each other are, will vote similarly (but not necessarily ACT similarly). These pairs can be both good and both bad pairs, but are more often bad because they know who each other are.
+- Analyze the data with no special roles, just Minions and Servants. This scores players positively for good actions, and negatively for bad ones. A 0 score for a player means the AI thinks he/she are neither good nor evil.
+    - COMPLETED
+- Analyze pairs of players. Oftentimes (will have to do more research) players on the same team who know who each other are, will vote similarly. These pairs can be both good and both bad pairs, but are more often bad because they know who each other are.
 - Use KNOWN_PLAYERS. Factor the player type of one of the players into account, reducing computation by a factor.
 

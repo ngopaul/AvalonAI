@@ -55,7 +55,8 @@ class Avalon:
             # 0: the position in PROPOSE_HISTORY that this quest was proposed (same as the position in VOTE_HISTORY)
             # 1: fail or success? (0 and 1 respectively)
             # 2: number of fails
-            # 3: number of successes """
+            # 3: number of successes 
+            # 4: number of rejects when this quest went through (only important if 4 of them) """
         self.quest_history = []
         """ Known Players:  
             # list of size NUM_PLAYERS, where each index correlates to the player number
@@ -110,7 +111,6 @@ class Avalon:
     def check_parameters(self, c):
         c.execute("SELECT * FROM player_alignment WHERE num_players = " + str(self.num_players))
         row = c.fetchall()[0]
-        print(row)
         num_good = self.role_types['Normal Good'] + self.role_types['Merlin'] + self.role_types['Percival']
         num_bad = self.role_types['Normal Bad'] + self.role_types['Morgana'] + self.role_types['Mordred'] + self.role_types['Oberon']
         if not (row[1] == num_good and row[2] == num_bad):
@@ -168,7 +168,7 @@ class Avalon:
     """ The current leader proposes a team. """
     def propose_team(self):
         print("Propose your team!")
-        proposed_team, current_quest = [], len(self.quest_history)
+        proposed_team, current_quest = [], self.cur_quest()
         max_people, num_people = self.people_per_quest[current_quest], 1
         while num_people <= max_people:
             added_player = sanitised_input("Choose team member " + str(num_people) + " for Quest " + str(current_quest) + ": ", int, max_=self.num_players - 1)
@@ -213,6 +213,7 @@ class Avalon:
     """ Gets the results of a quest. Passes possesion of the leader to the next person. """
     def quest(self):
         print("Quest Initiated!")
+        previous_rejects = self.quest_state[5]
         votes = []
         cur_quest = self.cur_quest()
         for i in range(self.people_per_quest[self.cur_quest()]):
@@ -225,7 +226,7 @@ class Avalon:
             else:
                 success += 1
         quest_result = int(fail < self.required_fails_per_quest[cur_quest])
-        self.go_quest(len(self.propose_history) - 1, quest_result, fail, success)
+        self.go_quest(len(self.propose_history) - 1, quest_result, fail, success, previous_rejects)
         self.quest_state[cur_quest] = quest_result
         self.quest_state[5] = 0
         self.change_current_leader()
@@ -245,8 +246,8 @@ class Avalon:
     def cur_quest(self):
         return len(self.quest_history)
 
-    def go_quest(self, propose_index, result, fails, successes):
-        self.quest_history.append([propose_index, result, fails, successes])
+    def go_quest(self, propose_index, result, fails, successes, previous_rejects):
+        self.quest_history.append([propose_index, result, fails, successes, previous_rejects])
 
     def change_current_leader(self):
         self.current_leader = (self.current_leader + 1) % self.num_players
