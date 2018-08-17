@@ -264,10 +264,7 @@ def print_help():
 
 if __name__ == '__main__':
     a = Avalon(0)
-    ana = Analysis(a)
-    ana.start_analysis()
     while (a.game_state > 1):
-        ana.analyze()
         user_input = input("Command (type help for commands): ")
         if (user_input == "help"):
             print_help()
@@ -290,6 +287,11 @@ if __name__ == '__main__':
             elif (user_input == "forcevote" or user_input == "fv"):
                 print("I hope you know what you're doing! Voting the previous proposal...")
                 a.force_vote()
+            elif (user_input == "analyze" or user_input == "ana"):
+                ana = Analysis(a)
+                ana.start_analysis()
+                ana.analyze()
+                print(ana.player_values)
     if a.game_state == 0:
         print("Minions have won!")
     else:
