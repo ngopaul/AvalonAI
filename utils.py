@@ -92,7 +92,7 @@ with llb as (
   select 'C' as col,9 as cnt union 
   select 'D' as col,27 as cnt
 ) 
-select a1.col,a2.col,a3.col,a4.col
+select a1.col,a2.col,a3.col,a4.col, 0 as score
 from llb a1
 cross join llb a2
 cross join llb a3
@@ -110,7 +110,7 @@ def create_possibilities(a):
     rtn += "SELECT "
     for i in range(1, len(players_to_roles) + 1):
         rtn += ("a" + str(i) + ".role,")
-    rtn = rtn[:-1]
+    rtn = rtn + " 0 as score "
 
     rtn += " FROM llb a1 "
     for i in range(2, len(players_to_roles) + 1):

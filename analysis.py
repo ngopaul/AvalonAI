@@ -62,9 +62,8 @@ class Analysis:
 
     """
 
-    # Vote through a to-fail quest, or against a to-win quest
-    # This is weighted more heavily when the quest turns the tide (i.e. GOOD/bad is about to win)
-    def mm_vote(self, player, quest_num):
+    # Minions seem to coordinate
+    def mm_coordinate(self, role_set):
         pass
 
     """ Heuristics for Servants of Arthur 
@@ -73,16 +72,11 @@ class Analysis:
 
     """
 
-    # Vote against a to-fail quest, or for a to-win quest
-    # This is weighted more heavily when the quest turns the tide (i.e. good/BAD is about to win)
-    def sa_vote(self, player, quest_num):
-        pass
-
     # Merlin is the first to vote against a bad person on a quest
-    def sa_merlin_predicts(self, player, other):
+    def sa_merlin_predicts(self, role_set):
         pass
 
     # Merlin starts trusting someone who is good,
     # when previously they were pretending to not trust the person
-    def sa_merlin_change_of_heart(self, player, other):
+    def sa_merlin_change_of_heart(self, role_set):
         pass

@@ -18,6 +18,6 @@ We will have several main stages (not in any particular order right now) to narr
 
 - Analyze the data with no special roles, just Minions and Servants. This scores players positively for good actions, and negatively for bad ones. A 0 score for a player means the AI thinks he/she are neither good nor evil.
     - COMPLETED
-- Analyze pairs of players. Oftentimes (will have to do more research) players on the same team who know who each other are, will vote similarly. These pairs can be both good and both bad pairs, but are more often bad because they know who each other are.
-- Use KNOWN_PLAYERS. Factor the player type of one of the players into account, reducing computation by a factor.
+- Analyze each possible combination of players, and rank which is the most likely by their score; score using the heuristics that we create (including the first analysis above). A command in the main game should output the top highest likely possibilities.
+    - Working on heuristics
 
