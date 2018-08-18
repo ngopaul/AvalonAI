@@ -109,7 +109,7 @@ def create_possibilities(a):
 
     rtn += "SELECT "
     for i in range(1, len(players_to_roles) + 1):
-        rtn += ("a" + str(i) + ".role,")
+        rtn += ("a" + str(i) + ".role" + " as " + "a" + str(i) + ",")
     rtn = rtn + " 0 as score "
 
     rtn += " FROM llb a1 "

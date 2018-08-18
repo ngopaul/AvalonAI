@@ -26,6 +26,8 @@ class Avalon:
             # 4: Morgana
             # 5: Mordred
             # 6: Oberon """
+        self.num_bad = 0
+        self.num_good = 0
         self.role_types = {'Normal Bad': 0, 'Normal Good': 0, 'Merlin': 0, 'Percival': 0, 'Morgana': 0, 'Mordred': 0, 'Oberon': 0}
 
         """ Varying variables that change throughout the game """
@@ -111,9 +113,9 @@ class Avalon:
     def check_parameters(self, c):
         c.execute("SELECT * FROM player_alignment WHERE num_players = " + str(self.num_players))
         row = c.fetchall()[0]
-        num_good = self.role_types['Normal Good'] + self.role_types['Merlin'] + self.role_types['Percival']
-        num_bad = self.role_types['Normal Bad'] + self.role_types['Morgana'] + self.role_types['Mordred'] + self.role_types['Oberon']
-        if not (row[1] == num_good and row[2] == num_bad):
+        self.num_good = self.role_types['Normal Good'] + self.role_types['Merlin'] + self.role_types['Percival']
+        self.num_bad = self.role_types['Normal Bad'] + self.role_types['Morgana'] + self.role_types['Mordred'] + self.role_types['Oberon']
+        if not (row[1] == self.num_good and row[2] == self.num_bad):
             print("For", self.num_players, "players, you must have", row[1], "good guys and", row[2], "bad guys.")
 
     """ SQL helper. Loads into instance variables. """
