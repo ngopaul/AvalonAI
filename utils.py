@@ -62,6 +62,7 @@ def get_known_players(a):
     return to_return
 
 role_numbers = {'Normal Bad': 0, 'Normal Good': 1, 'Merlin': 2, 'Percival': 3, 'Morgana': 4, 'Mordred': 5, 'Oberon': 6}
+num_to_names = {0: 'Normal Bad', 1: 'Normal Good', 2: 'Merlin', 3: 'Percival', 4: 'Morgana', 5: 'Mordred', 6: 'Oberon'}
 
 def get_all_players(a):
     to_return = []
@@ -102,25 +103,31 @@ def create_possibilities(a):
     rtn = "CREATE TABLE possibilities AS SELECT DISTINCT * FROM (WITH llb as ( "
     i = 1
     players_to_roles = get_all_players(a)
+
+    # first part (select 'A' as col, 1 as cnt); I used a binary instead of ternary sum.
     for pair in players_to_roles:
         rtn += "SELECT " + str(pair[1]) + " AS role, " + str(i) + " AS count UNION "
         i *= 2
     rtn = rtn[:-6] + ") " # remove the last union, close parens
 
+    # second (select a1.col as a1...)
     rtn += "SELECT "
     for i in range(1, len(players_to_roles) + 1):
         rtn += ("a" + str(i) + ".role" + " as " + "a" + str(i) + ",")
     rtn = rtn + " 0 as score "
 
+    # from llb a1 cross join ...
     rtn += " FROM llb a1 "
     for i in range(2, len(players_to_roles) + 1):
         rtn += ("CROSS JOIN llb a" + str(i) + " ")
 
+    # where case
     rtn += "WHERE "
     for i in range(1, len(players_to_roles) + 1):
         rtn += "a" + str(i) + ".count + "
     rtn = rtn[:-2] + "= " + str(2**len(players_to_roles) - 1)
     
+    # if you know something about roles already, account for that
     known_factor = known_to_where_statement(a)
 
     if known_factor == "":
@@ -130,3 +137,12 @@ def create_possibilities(a):
 
 def passed_votes_history(a):
     return [vote for vote in a.vote_history if vote.count(1) > vote.count(0)]
+
+def row_to_roles(row):
+    rtn = []
+    for num in row:
+        if type(num) == int and num in num_to_names:
+            rtn.append(num_to_names[num])
+        else:
+            rtn.append(num)
+    return rtn

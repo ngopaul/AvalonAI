@@ -118,7 +118,7 @@ class Avalon:
         if not (row[1] == self.num_good and row[2] == self.num_bad):
             print("For", self.num_players, "players, you must have", row[1], "good guys and", row[2], "bad guys.")
 
-    """ SQL helper. Loads into instance variables. """
+    """ SQL helper. Loads from tables into instance variables. """
     def load_info(self, c):
         c.execute("SELECT * FROM people_per_quest WHERE num_players = " + str(self.num_players))
         row = c.fetchall()[0]
@@ -127,7 +127,7 @@ class Avalon:
         row = c.fetchall()[0]
         self.required_fails_per_quest = [i for i in row[1:]]
 
-    """ For diagnostics """
+    """ For diagnostics and people playing the game """
     def print_all(self):
         print("Game state:", self.game_state)
         print("Number of players:", self.num_players)
@@ -137,11 +137,10 @@ class Avalon:
         print("Quest state:", self.quest_state)
         print("Quest history:", self.quest_history)
         print("Known Players:", self.known_players)
+        print("Feelings:", self.feelings)
 
     """ One player accuses another of being evil, or being a specific role. """
-    def accuse(self):
-        player_accusing = sanitised_input("Who accused? ", int, 0, self.num_players - 1)
-        player_accused = sanitised_input("Accusing whom? ", int, 0, self.num_players)
+    def accuse(self, player_accusing, player_accused):
         if (not (player_accusing in self.feelings)):
             self.feelings[player_accusing] = [[], [(self.current_time, player_accused)]]
         else:
@@ -161,7 +160,7 @@ class Avalon:
 
     """ The person using the AI knows the alignment of a player. """
     def known(self):
-        self.known_players[input("Which person? ")] = input("Which role? ")
+        self.known_players[int(input("Which person? "))] = int(input("Which role? "))
 
     """ Command-Line Known command"""
     def cl_known(self, player, role_num):
@@ -274,7 +273,9 @@ if __name__ == '__main__':
             a.print_all()
         elif (user_input == "break" or user_input == "quit"):
             break
-        elif (user_input == "guessmerlin" or "gm"):
+        elif (user_input == "known" or user_input == "kn"):
+            a.known()
+        elif (user_input == "guessmerlin" or user_input == "gm"):
             a.guess_merlin()
         elif a.game_state != 2: # If not! bad guys guess Merlin
             if (user_input == "proposeteam" or user_input == "pt"):
@@ -283,7 +284,9 @@ if __name__ == '__main__':
                 else:
                     print("Five quests have already been completed!")
             elif (user_input == "accuse" or user_input == "ac"):
-                a.accuse()
+                player_accusing = sanitised_input("Who accused? ", int, 0, a.num_players - 1)
+                player_accused = sanitised_input("Accusing whom? ", int, 0, a.num_players)
+                a.accuse(player_accusing, player_accused)
             elif (user_input == "trust" or user_input == "tr"):
                 a.trust()
             elif (user_input == "forcevote" or user_input == "fv"):
@@ -294,6 +297,15 @@ if __name__ == '__main__':
                 ana.start_analysis()
                 ana.analyze()
                 print(ana.player_values)
+            elif (user_input == "anamore"):
+                ana = Analysis(a)
+                ana.start_analysis()
+                ana.analyze(15)
+                print(ana.player_values)
+            else:
+                print("Invalid command.")
+        else:
+            print("Invalid command, must guess Merlin.")
     if a.game_state == 0:
         print("Minions have won!")
     else:

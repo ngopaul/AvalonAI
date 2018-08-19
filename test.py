@@ -18,7 +18,7 @@ def test1():
 
     a = Avalon(1) # don't preset-initialize
     # 5 people, with Merlin and Mordred
-    # this games simulates Merlin as player 2, Morgana as 3, and Normal Evil as 4
+    # this games simulates Merlin as player 2, Mordred as 3, and Normal Evil as 4
     a.initialize(5, {'Normal Bad': 1, 'Normal Good': 2, 'Merlin': 1, 'Percival': 0, 'Morgana': 0, 'Mordred': 1, 'Oberon': 0}, 0)
     
     # propose a team with players 0, 1
@@ -64,6 +64,11 @@ def test1():
     typewrite("1\n1\n1\n")
     a.propose_team()
 
+    ana = Analysis(a)
+    ana.start_analysis()
+    ana.analyze(10)
+    print("Guess good/evil: ", ana.player_values)
+
     assert a.quest_state[5] == 0
 
     # propose a team with players 0, 3; trying to weed out an evil
@@ -87,6 +92,11 @@ def test1():
     # the quest fails
     typewrite("0\n1\n1\n")
     a.propose_team()
+
+    ana = Analysis(a)
+    ana.start_analysis()
+    ana.analyze(10)
+    print("Guess good/evil: ", ana.player_values)
 
     # only one quest left!
 
@@ -112,7 +122,7 @@ def test1():
     
     ana = Analysis(a)
     ana.start_analysis()
-    ana.analyze()
+    ana.analyze(10)
     print("Guess good/evil: ", ana.player_values)
 
     # a.print_all()
