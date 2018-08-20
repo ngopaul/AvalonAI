@@ -146,9 +146,7 @@ class Avalon:
         else:
             self.feelings[player_accusing][1].append((self.current_time, player_accused))
         
-    def trust(self):
-        player_trusting = sanitised_input("Who trusts? ", int, 0, self.num_players - 1)
-        player_trusted = sanitised_input("Trusts whom? ", int, 0, self.num_players)
+    def trust(self, player_trusting, player_trusted):
         if (not (player_trusting in self.feelings)):
             self.feelings[player_trusting] = [[(self.current_time, player_trusted)], []]
         else:
@@ -159,66 +157,55 @@ class Avalon:
         return len(self.propose_history) - 1
 
     """ The person using the AI knows the alignment of a player. """
-    def known(self):
-        self.known_players[int(input("Which person? "))] = int(input("Which role? "))
+    def known(self, role, person):
+        self.known_players[person] = role
 
     """ Command-Line Known command"""
     def cl_known(self, player, role_num):
         self.known_players[player] = role_num
 
     """ The current leader proposes a team. """
-    def propose_team(self):
-        print("Propose your team!")
-        proposed_team, current_quest = [], self.cur_quest()
-        max_people, num_people = self.people_per_quest[current_quest], 1
-        while num_people <= max_people:
-            added_player = sanitised_input("Choose team member " + str(num_people) + " for Quest " + str(current_quest) + ": ", int, max_=self.num_players - 1)
-            if added_player in proposed_team:
-                print("Player", added_player, "is already chosen to be on the quest.")
-            else:
-                proposed_team.append(added_player)
-                num_people += 1
+    def propose_team(self, proposed_team, current_quest, max_people, proceed):
         self.propose_history.append(proposed_team)
-        answer = input("Proceed to vote? Yes (y) or No (n)? ")
-        if answer.lower() == "y":
-            self.vote()
+        if proceed.lower() == "y":
+            approved_counts, rejected_counts, vote_list = 0, 0, []
+            for i in range(self.num_players):
+                choice = sanitised_input("Player " + str(i) + ", approve (1) or reject (0) mission? ", int, 0, 1)
+                if choice == 1:
+                    approved_counts += 1
+                else: 
+                    rejected_counts += 1
+                vote_list.append(choice)
+            self.vote(approved_counts, rejected_counts, vote_list)
         else:
             self.vote_history.append([]) #Empty entry
             return
 
     """ The players vote on the most recently proposed team. If rejected, adds to the rejected tally. """
-    def vote(self):
-        approved_counts, rejected_counts, vote_list = 0, 0, []
-        for i in range(self.num_players):
-            choice = sanitised_input("Player " + str(i) + ", approve (1) or reject (0) mission? ", int, 0, 1)
-            if choice == 1:
-                approved_counts += 1
-            else: 
-                rejected_counts += 1
-            vote_list.append(choice)
+    def vote(self, approved_counts, rejected_counts, vote_list):
         self.vote_history.append(vote_list)
         if approved_counts > rejected_counts:
             self.quest_state[5] = 0 # Reset rejected tally
-            self.quest()
+            print("Quest Initiated!")
+            previous_rejects = self.quest_state[5]
+            votes = []
+            cur_quest = self.cur_quest()
+            for i in range(self.people_per_quest[self.cur_quest()]):
+                votes.append(sanitised_input("Result " + str(i) + " is success (1) or fail (0): ", int, 0, 1))
+            self.quest(previous_rejects, votes, cur_quest)
         else:
             self.quest_state[5] += 1 # Increment rejected tally
             self.change_current_leader()
             return
 
     """ We said we didn't want to vote after the proposal... but we did want to """
-    def force_vote(self):
+    def force_vote(self, approved_counts, rejected_counts, vote_list):
         self.quest_state[5] -= 1
         del self.vote_history[-1]
-        self.vote()
+        self.vote(approved_counts, rejected_counts, vote_list)
 
     """ Gets the results of a quest. Passes possesion of the leader to the next person. """
-    def quest(self):
-        print("Quest Initiated!")
-        previous_rejects = self.quest_state[5]
-        votes = []
-        cur_quest = self.cur_quest()
-        for i in range(self.people_per_quest[self.cur_quest()]):
-            votes.append(sanitised_input("Result " + str(i) + " is success (1) or fail (0): ", int, 0, 1))
+    def quest(self, previous_rejects, votes, cur_quest):
         fail = 0
         success = 0
         for vote in votes:
@@ -237,9 +224,8 @@ class Avalon:
         if self.quest_state[:-1].count(1) >= 3:
             self.game_state = 2 # Bad guys have a chance to guess merlin
 
-    def guess_merlin(self):
-        guess = sanitised_input("Who do you think is Merlin? ", int, 0, self.num_players - 1)
-        if (self.known_players[guess] == 2 or sanitised_input("Who is actually Merlin? ", int, 0, self.num_players - 1) == guess):
+    def guess_merlin(self, guess, actual):
+        if (guess == actual):
             self.game_state = 0
         else:
             self.game_state = 1
@@ -274,13 +260,28 @@ if __name__ == '__main__':
         elif (user_input == "break" or user_input == "quit"):
             break
         elif (user_input == "known" or user_input == "kn"):
-            a.known()
+            role = sanitised_input("Which role? ", int, 0, 6)
+            person = sanitised_input("Which person? ", int, 0, a.num_players - 1)
+            a.known(role, person)
         elif (user_input == "guessmerlin" or user_input == "gm"):
-            a.guess_merlin()
+            guess = sanitised_input("Who do you think is Merlin? ", int, 0, a.num_players - 1)
+            actual = sanitised_input("Who is actually Merlin? ", int, 0, a.num_players - 1)
+            a.guess_merlin(guess, actual)
         elif a.game_state != 2: # If not! bad guys guess Merlin
             if (user_input == "proposeteam" or user_input == "pt"):
                 if not (a.quest_state[4] > -1):
-                    a.propose_team()
+                    print("Propose your team!")
+                    proposed_team, current_quest = [], a.cur_quest()
+                    max_people, num_people = a.people_per_quest[current_quest], 1
+                    while num_people <= max_people:
+                        added_player = sanitised_input("Choose team member " + str(num_people) + " for Quest " + str(current_quest) + ": ", int, max_=a.num_players - 1)
+                        if added_player in proposed_team:
+                            print("Player", added_player, "is already chosen to be on the quest.")
+                        else:
+                            proposed_team.append(added_player)
+                            num_people += 1
+                    proceed = input("Proceed to vote? Yes (y) or No (n)? ")
+                    a.propose_team(proposed_team, current_quest, max_people, proceed)
                 else:
                     print("Five quests have already been completed!")
             elif (user_input == "accuse" or user_input == "ac"):
@@ -288,10 +289,20 @@ if __name__ == '__main__':
                 player_accused = sanitised_input("Accusing whom? ", int, 0, a.num_players)
                 a.accuse(player_accusing, player_accused)
             elif (user_input == "trust" or user_input == "tr"):
-                a.trust()
+                player_trusting = sanitised_input("Who trusts? ", int, 0, a.num_players - 1)
+                player_trusted = sanitised_input("Trusts whom? ", int, 0, a.num_players)
+                a.trust(player_trusting, player_trusted)
             elif (user_input == "forcevote" or user_input == "fv"):
                 print("I hope you know what you're doing! Voting the previous proposal...")
-                a.force_vote()
+                approved_counts, rejected_counts, vote_list = 0, 0, []
+                for i in range(a.num_players):
+                    choice = sanitised_input("Player " + str(i) + ", approve (1) or reject (0) mission? ", int, 0, 1)
+                    if choice == 1:
+                        approved_counts += 1
+                    else: 
+                        rejected_counts += 1
+                    vote_list.append(choice)
+                a.force_vote(approved_counts, rejected_counts, vote_list)
             elif (user_input == "analyze" or user_input == "ana"):
                 ana = Analysis(a)
                 ana.start_analysis()
