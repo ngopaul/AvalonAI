@@ -122,6 +122,7 @@ class Avalon:
         self.num_bad = self.role_types['Normal Bad'] + self.role_types['Morgana'] + self.role_types['Mordred'] + self.role_types['Oberon']
         if not (row[1] == self.num_good and row[2] == self.num_bad):
             print("For", self.num_players, "players, you must have", row[1], "good guys and", row[2], "bad guys.")
+            self.args_error()
 
     """ SQL helper. Loads from tables into instance variables. """
     def load_info(self, c):

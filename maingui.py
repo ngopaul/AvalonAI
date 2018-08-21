@@ -25,6 +25,33 @@ event_dict = {
 class MainGame:
     def __init__(self):
         self.num_players = 0
+        self.a = Avalon(1)
+
+    def update(self):
+        pass
+    
+    def handle_event(self, event):
+        if event.type == pygame.USEREVENT:
+            try: # to catch errors and instead throw an Event error
+                if current_event == "submitnext" and prev_event == "chooseroles":
+                    role_types = {'Normal Bad': 0, 'Normal Good': 0, 'Merlin': 0, 'Percival': 0, 'Morgana': 0, 'Mordred': 0, 'Oberon': 0}
+                    for role in roles_involved:
+                        if role.active:
+                            role_types[role.text] += 1
+                    role_types['Normal Bad'] = player_alignment[self.num_players][1] - (role_types['Morgana'] + role_types['Mordred'] + role_types['Oberon'])
+                    role_types['Normal Good'] = player_alignment[self.num_players][0] - (role_types['Merlin'] + role_types['Percival'])
+                    if role_types['Normal Bad'] < 0 or role_types['Normal Good'] < 0: # selected too many roles
+                        assert 1 == 0
+                    self.a.initialize(self.num_players, role_types, 0)
+                    for i in range(self.num_players):
+                        players.append(Player(i))
+                    roles_involved.items = [] # to save on time
+                    new_event = pygame.event.Event(pygame.USEREVENT, {"name": "mainstate", "error": False})
+                    pygame.event.post(new_event)
+            except:
+                new_event = pygame.event.Event(pygame.USEREVENT, {"name": "Improper Input", "error": True})
+                pygame.event.post(new_event)
+
 
     def parse(self, inpt):
         print("Parsing " + inpt, "with current_event: " + str(current_event))
@@ -119,8 +146,10 @@ class MainText(TextOut):
         self.clear()
         if current_event == 'initnumplayers':
             self.text = "How many players?"
-        if current_event == 'chooseroles':
+        elif current_event == 'chooseroles':
             self.text = "Choose the roles involved."
+        elif current_event == 'mainstate':
+            self.text = "Choose an action."
         self.txt_surface = FONT.render(self.text, True, self.color)
         self.txt_surface_clear = FONT.render(self.text, True, background)
         self.draw(screen)
@@ -152,7 +181,7 @@ class ErrText(TextOut):
             self.draw(screen)
 
 class CheckBox(TextOut):
-    def __init__(self, x, y, text, color = COLOR_INACTIVE):
+    def __init__(self, x, y, text, type = 'check', color = COLOR_INACTIVE): # another type would be radio
         self.x = x
         self.y = y
         self.color = color
@@ -228,15 +257,37 @@ class ManyItems():
     def clear(self):
         for item in self.items:
             item.clear()
+    
+    def __iter__(self):
+        return self.items.__iter__()
+    
+    def append(self, item):
+        self.items.append(item)
 
 class Player():
     def __init__(self, number):
         theta = 2 * pi * number / main_game.num_players
         r = 100
         self.x, self.y = polar_to_cartesian(r, theta)
+        self.x = int(self.x + 640) # center x and y
+        self.y = int(self.y + 400)
         self.active = False
+        self.color = COLOR_INACTIVE
+        self.rect = pygame.Rect(self.x - 15, self.y - 15, 30, 30)
     
-    
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if self.rect.collidepoint(event.pos):
+                # Toggle the active variable.
+                self.active = not self.active
+            # Change the current color of the box.
+            self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
+
+    def update(self):
+        self.draw(screen)
+
+    def draw(self, screen):
+        pygame.draw.circle(screen, self.color, (self.x, self.y), 15, 0)
 
 done = False
 clock = pygame.time.Clock()
@@ -244,8 +295,9 @@ clock = pygame.time.Clock()
 checkboxes = []
 checkbox_loc = [40, 200]
 for player_type in list(role_numbers.keys()):
-    checkboxes.append(CheckBox(checkbox_loc[0], checkbox_loc[1], player_type))
-    checkbox_loc[1] += 25
+    if player_type != "Normal Bad" and player_type != "Normal Good":
+        checkboxes.append(CheckBox(checkbox_loc[0], checkbox_loc[1], player_type))
+        checkbox_loc[1] += 25
 roles_involved = ManyItems(checkboxes)
 input_box1 = InputBox(100, 100, 140, 32)
 main_text = MainText()
@@ -253,8 +305,9 @@ err_text = ErrText()
 main_game = MainGame()
 submit_button = Button(990, 30, pygame.image.load("checkmark.png"))
 cancel_button = Button(1030, 30, pygame.image.load("xmark.png"), 'cancelnext')
+players = ManyItems([])
 
-items = [input_box1, main_text, err_text, submit_button, cancel_button, roles_involved]
+items = [main_game, players, input_box1, main_text, err_text, submit_button, cancel_button, roles_involved]
 
 prev_event = ""
 current_event = ""
@@ -266,13 +319,18 @@ while not done:
     for event in pygame.event.get():
         if event.type == pygame.USEREVENT:
             if event.__dict__["error"] == False:
-                if event.__dict__["name"] != 'cancelnext':
+                if event.__dict__["name"] != 'cancelnext': # not a cancel
                     if current_event != 'submitnext':
                         prev_event = current_event
                     current_event = event.__dict__["name"]
-                else:
-                    current_event = prev_event
-                print(current_event)
+                else: # it is a cancel
+                    if not current_event in ['mainstate', 'initnumplayers']: # you can cancel things not in the list
+                        current_event = prev_event
+                    else: # you tried canceling things in the list
+                        new_event = pygame.event.Event(pygame.USEREVENT, {"name": "Can't cancel now!", "error": True})
+                        pygame.event.post(new_event)
+                print("Current event:", current_event)
+                print("Previous event:", prev_event)
         if event.type == pygame.QUIT:
             done = True
         

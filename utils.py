@@ -173,3 +173,5 @@ def polar_to_cartesian(r, theta):
     x = r * cos(theta)
     y = r * sin(theta)
     return(x, y)
+
+player_alignment = {5: [3, 2], 6: [4, 2], 7: [4, 3], 8: [5, 3], 9: [6, 3], 10: [6, 4]}
