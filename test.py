@@ -96,12 +96,6 @@ def test1():
     typewrite("1\n1\n1\n")
     a.propose_team([1, 2, 3], a.cur_quest(), a.people_per_quest[a.cur_quest()], 'y')
 
-
-    # a.cl_known(2, 2) # player 2, is merlin
-    # a.cl_known(0, 1)
-    # a.cl_known(1, 1)
-
-
     # print(get_all_players(a))
     # print(get_known_players(a))
     # print(create_possibilities(a))

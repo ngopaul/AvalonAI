@@ -43,11 +43,19 @@ class MainGame:
                     if role_types['Normal Bad'] < 0 or role_types['Normal Good'] < 0: # selected too many roles
                         assert 1 == 0
                     self.a.initialize(self.num_players, role_types, 0)
+
+                    # making all the players
                     for i in range(self.num_players):
                         players.append(Player(i))
+                    # making all the commands
+                    for command in list_commands:
+                        commands.append(CheckBox(checkbox_loc[0], checkbox_loc[1],command,'radio', COLOR_INACTIVE, 'mainstate'))
+                        checkbox_loc[1] += 25
+                    
                     roles_involved.items = [] # to save on time
                     new_event = pygame.event.Event(pygame.USEREVENT, {"name": "mainstate", "error": False})
                     pygame.event.post(new_event)
+                    
             except:
                 new_event = pygame.event.Event(pygame.USEREVENT, {"name": "Improper Input", "error": True})
                 pygame.event.post(new_event)
@@ -181,7 +189,7 @@ class ErrText(TextOut):
             self.draw(screen)
 
 class CheckBox(TextOut):
-    def __init__(self, x, y, text, type = 'check', color = COLOR_INACTIVE): # another type would be radio
+    def __init__(self, x, y, text, typeof = 'check', color = COLOR_INACTIVE, activeevent = 'chooseroles'): # another type would be radio
         self.x = x
         self.y = y
         self.color = color
@@ -190,6 +198,8 @@ class CheckBox(TextOut):
         self.txt_surface_clear = FONT.render(text, True, background)
         self.rect = pygame.Rect(x, y, max(200, self.txt_surface.get_width()+10), 32)
         self.active = False
+        self.typeof = typeof
+        self.activeevent = activeevent
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -201,7 +211,7 @@ class CheckBox(TextOut):
             self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
     
     def update(self):
-        if current_event == 'chooseroles':
+        if current_event == self.activeevent:
             self.draw(screen)
         else:
             self.clear()
@@ -292,6 +302,8 @@ class Player():
 done = False
 clock = pygame.time.Clock()
 
+# initialize roles involved right now because that's what you want 
+# to work with at the start of the game
 checkboxes = []
 checkbox_loc = [40, 200]
 for player_type in list(role_numbers.keys()):
@@ -299,15 +311,29 @@ for player_type in list(role_numbers.keys()):
         checkboxes.append(CheckBox(checkbox_loc[0], checkbox_loc[1], player_type))
         checkbox_loc[1] += 25
 roles_involved = ManyItems(checkboxes)
-input_box1 = InputBox(100, 100, 140, 32)
-main_text = MainText()
-err_text = ErrText()
-main_game = MainGame()
-submit_button = Button(990, 30, pygame.image.load("checkmark.png"))
-cancel_button = Button(1030, 30, pygame.image.load("xmark.png"), 'cancelnext')
+# reset checkboxes to use it again later.
+checkboxes = []
+checkbox_loc = [40, 200]
+list_commands = ["accuse", "trust", "known", "propose_team", "vote", "quest"]
+# we'll initialize COMMANDS later.
+commands = ManyItems([])
+# we'll initialize PLAYERS later.
 players = ManyItems([])
 
-items = [main_game, players, input_box1, main_text, err_text, submit_button, cancel_button, roles_involved]
+# Our main input box for text input
+input_box1 = InputBox(100, 100, 140, 32)
+# Our main text
+main_text = MainText()
+# our error messages
+err_text = ErrText()
+# a handler between pygame and avalon
+main_game = MainGame()
+# our two buttons for summission and cancelation
+submit_button = Button(990, 30, pygame.image.load("checkmark.png"))
+cancel_button = Button(1030, 30, pygame.image.load("xmark.png"), 'cancelnext')
+
+
+items = [main_game, players, commands, input_box1, main_text, err_text, submit_button, cancel_button, roles_involved]
 
 prev_event = ""
 current_event = ""
