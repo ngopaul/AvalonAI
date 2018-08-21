@@ -3,6 +3,9 @@ import sqlite3
 from sqlite3 import OperationalError
 from math import *
 
+role_numbers = {'Normal Bad': 0, 'Normal Good': 1, 'Merlin': 2, 'Percival': 3, 'Morgana': 4, 'Mordred': 5, 'Oberon': 6}
+num_to_names = {0: 'Normal Bad', 1: 'Normal Good', 2: 'Merlin', 3: 'Percival', 4: 'Morgana', 5: 'Mordred', 6: 'Oberon'}
+
 # @StackOverflow Community
 def sanitised_input(prompt, type_=None, min_=None, max_=None, range_=None):
     if min_ is not None and max_ is not None and max_ < min_:
@@ -61,9 +64,6 @@ def get_known_players(a):
         if a.known_players[i] != -1:
             to_return.append([i, a.known_players[i]])
     return to_return
-
-role_numbers = {'Normal Bad': 0, 'Normal Good': 1, 'Merlin': 2, 'Percival': 3, 'Morgana': 4, 'Mordred': 5, 'Oberon': 6}
-num_to_names = {0: 'Normal Bad', 1: 'Normal Good', 2: 'Merlin', 3: 'Percival', 4: 'Morgana', 5: 'Mordred', 6: 'Oberon'}
 
 def get_all_players(a):
     to_return = []

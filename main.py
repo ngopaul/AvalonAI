@@ -70,7 +70,13 @@ class Avalon:
             # Each player (index in list) gets a list of feelings. The first is a
             # list of (trusted people, time trusted) pairs and the second is a list of 
             # (mistrusted people, time mistrusted).
-            # aka: map {player_number > [ [(trusts, time)], [(mistrusts, time)] ]} """
+            # aka: map {player_number > [ [(trusts, time)], [(mistrusts, time)] ]}
+            # alternative, faster approach: {player_number -> [
+            #                                                  {trusted_player -> [times,]}, 
+            #                                                  {untrusted_player -> [times,]}
+            #                                                 ]
+            #                               }
+            #  """
         self.feelings = {}
 
         if value == 0: #if you want to preset-initialize
@@ -151,18 +157,18 @@ class Avalon:
             self.args_error()
             return
         if (not (player_accusing in self.feelings)):
-            self.feelings[player_accusing] = [[], [(self.current_time, player_accused)]]
+            self.feelings[player_accusing] = [{}, {player_accused : [self.current_time]}]
         else:
-            self.feelings[player_accusing][1].append((self.current_time, player_accused))
+            self.feelings[player_accusing][1][player_accused].append(self.current_time)
         
     def trust(self, player_trusting, player_trusted):
         if not (check_person(self, player_trusting) and check_person(self, player_trusted) and player_trusting != player_trusted):
             self.args_error()
             return
         if (not (player_trusting in self.feelings)):
-            self.feelings[player_trusting] = [[(self.current_time, player_trusted)], []]
+            self.feelings[player_trusting] = [{player_trusted : [self.current_time]}, {}]
         else:
-            self.feelings[player_trusting][0].append((self.current_time, player_trusted))
+            self.feelings[player_trusting][0][player_trusted].append(self.current_time)
 
     """ Returns the index of the last item in proposal array. """
     def current_time(self):
