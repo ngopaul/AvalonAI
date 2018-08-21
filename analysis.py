@@ -41,7 +41,7 @@ class Analysis:
         # set of roles, and based on scoring each of the possible sets, one 
         # should eventually stand out as the correct role set.
         order_string = order_string[:-1] + ";"
-        self.c.execute("select * from possibilities order by 1")
+        self.c.execute("select * from possibilities")
         rows = self.c.fetchall()
         for row in rows:
             role_set = row[0:5]

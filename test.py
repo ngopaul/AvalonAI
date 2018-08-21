@@ -108,7 +108,7 @@ def test1():
     
     ana = Analysis(a)
     ana.start_analysis()
-    ana.analyze(10)
+    ana.analyze()
     print("Guess good/evil: ", ana.player_values)
 
     # a.print_all()

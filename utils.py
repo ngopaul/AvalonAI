@@ -1,6 +1,7 @@
 # Utilities File
 import sqlite3
 from sqlite3 import OperationalError
+from math import *
 
 # @StackOverflow Community
 def sanitised_input(prompt, type_=None, min_=None, max_=None, range_=None):
@@ -166,3 +167,9 @@ def check_person(a, person_num):
 """ Checks if a role num is valid """
 def check_role(role):
     return 0 <= role < 7 and type(role) == int
+
+""" Convert polar to cartesian """
+def polar_to_cartesian(r, theta):
+    x = r * cos(theta)
+    y = r * sin(theta)
+    return(x, y)
