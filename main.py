@@ -181,15 +181,8 @@ class Avalon:
             return
         self.known_players[person] = role
 
-    """ Command-Line Known command"""
-    def cl_known(self, player, role_num):
-        if not (check_person(self, player) and check_role(role_num)):
-            self.args_error()
-            return
-        self.known_players[player] = role_num
-
     """ The current leader proposes a team. """
-    def propose_team(self, proposed_team, current_quest, max_people, proceed):
+    def propose_team(self, proposed_team, current_quest, max_people, proceed, command_line = False):
         if (current_quest != self.cur_quest() or max_people != self.people_per_quest[self.cur_quest()] or not proceed.lower() in ['y', 'n']):
             self.args_error()
             return
@@ -198,38 +191,42 @@ class Avalon:
             return
         self.propose_history.append(proposed_team)
         if proceed.lower() == "y":
-            approved_counts, rejected_counts, vote_list = 0, 0, []
-            for i in range(self.num_players):
-                choice = sanitised_input("Player " + str(i) + ", approve (1) or reject (0) mission? ", int, 0, 1)
-                if choice == 1:
-                    approved_counts += 1
-                else: 
-                    rejected_counts += 1
-                vote_list.append(choice)
-            self.vote(approved_counts, rejected_counts, vote_list)
+            if command_line == False:
+                approved_counts, rejected_counts, vote_list = 0, 0, []
+                for i in range(self.num_players):
+                    choice = sanitised_input("Player " + str(i) + ", approve (1) or reject (0) mission? ", int, 0, 1)
+                    if choice == 1:
+                        approved_counts += 1
+                    else: 
+                        rejected_counts += 1
+                    vote_list.append(choice)
+                self.vote(approved_counts, rejected_counts, vote_list)
+            return 1
         else:
             self.vote_history.append([]) #Empty entry
-            return
+            return 0
 
     """ The players vote on the most recently proposed team. If rejected, adds to the rejected tally. """
-    def vote(self, approved_counts, rejected_counts, vote_list):
+    def vote(self, approved_counts, rejected_counts, vote_list, command_line = False):
         if (not check_list(vote_list, 0, 1, self.num_players) or approved_counts != vote_list.count(1)
         or rejected_counts != vote_list.count(0) or approved_counts + rejected_counts != self.num_players):
             self.args_error()
             return
         self.vote_history.append(vote_list)
         if approved_counts > rejected_counts:
-            previous_rejects = self.quest_state[5]
-            print("Quest Initiated!")
-            votes = []
-            cur_quest = self.cur_quest()
-            for i in range(self.people_per_quest[self.cur_quest()]):
-                votes.append(sanitised_input("Result " + str(i) + " is success (1) or fail (0): ", int, 0, 1))
-            self.quest(previous_rejects, votes, cur_quest)
+            if command_line == False:
+                previous_rejects = self.quest_state[5]
+                print("Quest Initiated!")
+                votes = []
+                cur_quest = self.cur_quest()
+                for i in range(self.people_per_quest[self.cur_quest()]):
+                    votes.append(sanitised_input("Result " + str(i) + " is success (1) or fail (0): ", int, 0, 1))
+                self.quest(previous_rejects, votes, cur_quest)
+            return 1
         else:
             self.quest_state[5] += 1 # Increment rejected tally
             self.change_current_leader()
-            return
+            return 0
 
     """ We said we didn't want to vote after the proposal... but we did want to """
     def force_vote(self, approved_counts, rejected_counts, vote_list):
@@ -237,7 +234,7 @@ class Avalon:
         self.vote(approved_counts, rejected_counts, vote_list)
 
     """ Gets the results of a quest. Passes possesion of the leader to the next person. """
-    def quest(self, previous_rejects, votes, cur_quest):
+    def quest(self, previous_rejects, votes, cur_quest, command_line = True):
         if (previous_rejects != self.quest_state[5] or cur_quest != self.cur_quest() or not check_list(votes, 0, 1, self.people_per_quest[cur_quest])):
             self.args_error()
             return
