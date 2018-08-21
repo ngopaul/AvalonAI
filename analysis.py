@@ -156,8 +156,33 @@ class Analysis:
     # Merlin starts trusting someone who is good,
     # when previously they were pretending to not trust the person
     def sa_merlin_change_of_heart(self, role_set):  
-        heuristic_value = 0
-        #for r in range(len(role_set)):
+        heuristics = []
+        merlin = -1000
+        servants = []
+        # Find index of merlin
+        # Find index of Loyal Servants
+        # Using merlin in self.feelings, access his trusted and mistrust dictionaries and compare the most recent between those two values
+        for r in range(len(role_set)):
+            if r == 1: # Loyal Servant of Arthur
+                servant_indices.append(role_set.index(r))
+            if r == 2: # Merlin 
+                merlin_index = role_set.index(r)
+        if merlin in a.feelings: # Check if Merlin has feelings!
+            merlin_feelings = a.feelings[merlin_index]
+            for servant in servant_indices:
+                trust_weight, mistrust_weight = 0, 0
+                if servant in merlin_feelings[0]:
+                    trust_weight = merlin_feelings[0][servant][-1]
+                if servant in merlin_feelings[1]:
+                    mistrust_weight = merlin_feelings[1][servant][-1]
+                heuristics.append(trust_weight > mistrust_weight)
+            return sum(heuristics)
+        else: # If Merlin has no feelings, heuristic is USELESS!
+            return 0
+
+
+        
+
   
         return heuristic_value
 
