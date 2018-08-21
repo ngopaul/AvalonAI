@@ -109,6 +109,11 @@ class Avalon:
 
         print("Let the game begin!\n")
 
+    """ Throws an improper args error """
+    def args_error(self):
+        print("Improper arguments!")
+        assert 1 == 0
+
     """ SQL helper. Checks if initialization is valid. """
     def check_parameters(self, c):
         c.execute("SELECT * FROM player_alignment WHERE num_players = " + str(self.num_players))
@@ -141,12 +146,18 @@ class Avalon:
 
     """ One player accuses another of being evil, or being a specific role. """
     def accuse(self, player_accusing, player_accused):
+        if not (check_person(self, player_accused) and check_person(self, player_accusing) and player_accusing != player_accused):
+            self.args_error()
+            return
         if (not (player_accusing in self.feelings)):
             self.feelings[player_accusing] = [[], [(self.current_time, player_accused)]]
         else:
             self.feelings[player_accusing][1].append((self.current_time, player_accused))
         
     def trust(self, player_trusting, player_trusted):
+        if not (check_person(self, player_trusting) and check_person(self, player_trusted) and player_trusting != player_trusted):
+            self.args_error()
+            return
         if (not (player_trusting in self.feelings)):
             self.feelings[player_trusting] = [[(self.current_time, player_trusted)], []]
         else:
@@ -158,14 +169,26 @@ class Avalon:
 
     """ The person using the AI knows the alignment of a player. """
     def known(self, role, person):
+        if not (check_person(self, person) and check_role(role)):
+            self.args_error()
+            return
         self.known_players[person] = role
 
     """ Command-Line Known command"""
     def cl_known(self, player, role_num):
+        if not (check_person(self, player) and check_role(role_num)):
+            self.args_error()
+            return
         self.known_players[player] = role_num
 
     """ The current leader proposes a team. """
     def propose_team(self, proposed_team, current_quest, max_people, proceed):
+        if (current_quest != self.cur_quest() or max_people != self.people_per_quest[self.cur_quest()] or not proceed.lower() in ['y', 'n']):
+            self.args_error()
+            return
+        if (not check_list(proposed_team, 0, self.num_players-1, self.people_per_quest[self.cur_quest()], False)):
+            self.args_error()
+            return
         self.propose_history.append(proposed_team)
         if proceed.lower() == "y":
             approved_counts, rejected_counts, vote_list = 0, 0, []
@@ -183,11 +206,14 @@ class Avalon:
 
     """ The players vote on the most recently proposed team. If rejected, adds to the rejected tally. """
     def vote(self, approved_counts, rejected_counts, vote_list):
+        if (not check_list(vote_list, 0, 1, self.num_players) or approved_counts != vote_list.count(1)
+        or rejected_counts != vote_list.count(0) or approved_counts + rejected_counts != self.num_players):
+            self.args_error()
+            return
         self.vote_history.append(vote_list)
         if approved_counts > rejected_counts:
-            self.quest_state[5] = 0 # Reset rejected tally
-            print("Quest Initiated!")
             previous_rejects = self.quest_state[5]
+            print("Quest Initiated!")
             votes = []
             cur_quest = self.cur_quest()
             for i in range(self.people_per_quest[self.cur_quest()]):
@@ -200,12 +226,15 @@ class Avalon:
 
     """ We said we didn't want to vote after the proposal... but we did want to """
     def force_vote(self, approved_counts, rejected_counts, vote_list):
-        self.quest_state[5] -= 1
         del self.vote_history[-1]
         self.vote(approved_counts, rejected_counts, vote_list)
 
     """ Gets the results of a quest. Passes possesion of the leader to the next person. """
     def quest(self, previous_rejects, votes, cur_quest):
+        if (previous_rejects != self.quest_state[5] or cur_quest != self.cur_quest() or not check_list(votes, 0, 1, self.people_per_quest[cur_quest])):
+            self.args_error()
+            return
+        self.quest_state[5] = 0 # Reset rejected tally
         fail = 0
         success = 0
         for vote in votes:
@@ -225,6 +254,9 @@ class Avalon:
             self.game_state = 2 # Bad guys have a chance to guess merlin
 
     def guess_merlin(self, guess, actual):
+        if (not check_person(self, guess) or not check_person(self, actual)):
+            self.args_error()
+            return
         if (guess == actual):
             self.game_state = 0
         else:
@@ -240,7 +272,12 @@ class Avalon:
         self.current_leader = (self.current_leader + 1) % self.num_players
 
 def print_help():
-    print("printall or pa;", "proposeteam or pt;", "accuse or ac;", "forcevote or fv;", "break")
+    print("\tprintall or pa; break")
+    print("\tanalyze; anamore")
+    print("\tproposeteam or pt")
+    print("\tknown or kn")
+    print("\taccuse or ac; trust or tr")
+    print("\tforcevote or fv")
 
 # comment copied from stackoverflow @Tamás
 """ Some explanation here: __name__ is a special Python variable that holds the name

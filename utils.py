@@ -146,3 +146,23 @@ def row_to_roles(row):
         else:
             rtn.append(num)
     return rtn
+
+def check_list(lst, MIN, MAX, length, duplicates = True):
+    if len(lst) != length:
+        return False
+    copy = []
+    for item in lst:
+        if item < MIN or item > MAX:
+            return False
+        if not duplicates and item in copy:
+            return False
+        copy.append(item)
+    return True
+
+""" Checks if a person's number is valid """
+def check_person(a, person_num):
+    return 0 <= person_num < a.num_players and type(person_num) == int
+
+""" Checks if a role num is valid """
+def check_role(role):
+    return 0 <= role < 7 and type(role) == int
