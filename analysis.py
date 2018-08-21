@@ -157,10 +157,8 @@ class Analysis:
     # when previously they were pretending to not trust the person
     def sa_merlin_change_of_heart(self, role_set):  
         heuristic_value = 0
-        for r in range(len(role_set)):
-            if role_set[r] == 1:
-
-    
+        #for r in range(len(role_set)):
+  
         return heuristic_value
 
 
