@@ -181,9 +181,3 @@ class Analysis:
             return 0
 
 
-        
-
-  
-        return heuristic_value
-
-
