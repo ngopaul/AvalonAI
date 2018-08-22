@@ -185,10 +185,10 @@ class Avalon:
     def propose_team(self, proposed_team, current_quest, max_people, proceed = 'y', command_line = False):
         if (current_quest != self.cur_quest() or max_people != self.people_per_quest[self.cur_quest()] or not proceed.lower() in ['y', 'n']):
             self.args_error()
-            return
+            # return
         if (not check_list(proposed_team, 0, self.num_players-1, self.people_per_quest[self.cur_quest()], False)):
             self.args_error()
-            return
+            # return
         self.propose_history.append(proposed_team)
         if proceed.lower() == "y":
             if command_line == False:

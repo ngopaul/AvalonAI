@@ -26,6 +26,19 @@ def make_event(eventname, errorstate):
     new_event = pygame.event.Event(pygame.USEREVENT, {"name": eventname, "error": errorstate})
     pygame.event.post(new_event)
 
+""" There are many different states in the game. In order to easily be able to 
+change between states and therefore change the available commands, each of 
+these functions will populate the commands list properly. """
+
+# accuse, trust, known, propose team
+def commands_change(list_commands):
+    commands.remove_all()
+    checkbox_loc = [40, 200]
+    # making all the commands
+    for command in list_commands:
+        commands.append(CheckBox(checkbox_loc[0], checkbox_loc[1],command,'radio', COLOR_INACTIVE, 'mainstate', command))
+        checkbox_loc[1] += 25
+
 class MainGame:
     def __init__(self):
         self.num_players = 0
@@ -67,15 +80,18 @@ class MainGame:
                         # making all the players
                         for i in range(self.num_players):
                             players.append(Player(i))
-                        # making all the commands
-                        for command in list_commands:
-                            commands.append(CheckBox(checkbox_loc[0], checkbox_loc[1],command,'radio', COLOR_INACTIVE, 'mainstate', command))
-                            checkbox_loc[1] += 25
+                        
                         # prepopulating vote_list
                         self.vote_list = [0 for i in range(self.num_players)]
 
+                        # showing the right commands
+                        commands_change(["accuse", "trust", 'known', 'propose_team'])
+
                         roles_involved.items = [] # to save on time
+
+                        # start the mainstate of the game!
                         make_event("mainstate", False)
+
                     elif prev_event == "accuse":
                         assert len(self.accuse) == 2
                         self.a.accuse(self.accuse[0], self.accuse[1])
@@ -87,18 +103,24 @@ class MainGame:
                         self.a.known(self.known[0], self.known[1])
                     elif prev_event == "propose_team":
                         self.a.propose_team(self.proposed_team, self.a.cur_quest(), self.a.people_per_quest[self.a.cur_quest()], 'y', True)
+                        commands_change(['vote'])
                     elif prev_event == "vote":
                         self.a.vote(self.vote_list.count(1), self.vote_list.count(0), self.vote_list, True)
+                        commands_change(['quest'])
                     elif prev_event == "quest":
                         self.a.quest(self.a.quest_state[5], self.quest_votes[:self.a.people_per_quest[self.a.cur_quest()]], self.a.cur_quest(), True)
+                        commands_change(["accuse", "trust", 'known', 'propose_team'])
                     main_game.a.print_all()
                     print("\n")
                     make_event('mainstate', False)
                     self.reset()
             except:
                 make_event("Improper Input", True)
+                make_event('mainstate', False)
+                self.reset()
 
-
+    # parses text input. Here we use current event, not previous event 
+    # (since we don't click the check mark for text)
     def parse(self, inpt):
         print("Parsing " + inpt, "with current_event: " + str(current_event))
         if current_event == 'initnumplayers':
@@ -111,14 +133,18 @@ class MainGame:
             except:
                 print("Throwing error.")
                 make_event("Improper Input", True)
+        elif current_event == 'quest':
+            # TODO
+            pass
 
 class InputBox:
-    def __init__(self, x, y, w, h, text=''):
+    def __init__(self, x, y, w, h, text='', hidelist = []):
         self.rect = pygame.Rect(x, y, w, h)
         self.color = COLOR_INACTIVE
         self.text = text
         self.txt_surface = FONT.render(text, True, self.color)
         self.active = False
+        self.hidelist = hidelist
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -147,13 +173,19 @@ class InputBox:
         # Resize the box if the text is too long.
         width = max(200, self.txt_surface.get_width()+10)
         self.rect.w = width
-        self.draw(screen)
+        if current_event not in self.hidelist:
+            self.draw(screen)
+        else:
+            self.clear()
 
     def draw(self, screen):
         # Blit the text.
         screen.blit(self.txt_surface, (self.rect.x+5, self.rect.y+5))
         # Blit the rect.
         pygame.draw.rect(screen, self.color, self.rect, 2)
+
+    def clear(self):
+        pygame.draw.rect(screen, background, self.rect, 0)
 
 class TextOut:
     def __init__(self, x, y, text, color = COLOR_ACTIVE):
@@ -272,7 +304,7 @@ class CheckBox(TextOut):
         screen.blit(self.txt_surface, (self.x, self.y))
 
 class Button():
-    def __init__(self, x, y, image, eventtype = 'submitnext', typeof = 'activate'): #also toggle
+    def __init__(self, x, y, image, eventtype = 'submitnext', typeof = 'activate', hidelist = []): #also toggle
         self.x = x
         self.y = y
         self.image = image
@@ -283,6 +315,7 @@ class Button():
         self.height = image.get_height()
         self.typeof = typeof
         self.eventtype = eventtype
+        self.hidelist = hidelist
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -290,7 +323,10 @@ class Button():
                 make_event(self.eventtype, False)
     
     def update(self):
-        self.draw(screen)
+        if current_event not in self.hidelist:
+            self.draw(screen)
+        else:
+            self.clear()
     
     def clear(self):
         pygame.draw.rect(screen, background, self.imagerect, 0)
@@ -323,6 +359,9 @@ class ManyItems():
     
     def append(self, item):
         self.items.append(item)
+    
+    def remove_all(self):
+        self.items = []
 
     def deactivate(self):
         for item in self.items:
@@ -342,7 +381,7 @@ class Player():
     
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos):
+            if self.rect.collidepoint(event.pos) and current_event != 'mainstate':
                 # Toggle the active variable.
                 self.active = not self.active
 
@@ -409,17 +448,14 @@ for player_type in list(role_numbers.keys()):
         checkboxes.append(CheckBox(checkbox_loc[0], checkbox_loc[1], player_type))
         checkbox_loc[1] += 25
 roles_involved = ManyItems(checkboxes)
-# reset checkboxes to use it again later.
-checkboxes = []
-checkbox_loc = [40, 200]
-list_commands = ["accuse", "trust", "known", "propose_team", "vote", "quest"]
+
 # we'll initialize COMMANDS later.
 commands = ManyItems([])
 # we'll initialize PLAYERS later.
 players = ManyItems([])
 
 # Our main input box for text input
-input_box1 = InputBox(100, 100, 140, 32)
+main_input = InputBox(100, 100, 140, 32, hidelist=['chooseroles', 'mainstate', 'accuse', 'trust', 'known', 'propose_team', 'vote', 'quest', 'vote_merlin'])
 # Our main text
 main_text = MainText()
 # our error messages
@@ -427,41 +463,46 @@ err_text = ErrText()
 # a handler between pygame and avalon
 main_game = MainGame()
 # our two buttons for summission and cancelation
-submit_button = Button(990, 30, pygame.image.load("checkmark.png"))
-cancel_button = Button(1030, 30, pygame.image.load("xmark.png"), 'cancelnext')
+submit_button = Button(990, 30, pygame.image.load("checkmark.png"), hidelist = ['initnumplayers'])
+cancel_button = Button(1030, 30, pygame.image.load("xmark.png"), 'cancelnext', hidelist = ['initnumplayers'])
 
+# we iterate through our items to update them
+items = [main_game, players, commands, main_input, main_text, err_text, submit_button, cancel_button, roles_involved]
 
-items = [main_game, players, commands, input_box1, main_text, err_text, submit_button, cancel_button, roles_involved]
-
+# keeping track of the state of the game
 prev_event = ""
 current_event = ""
+
+# starts the game off with the initnumplayers mode
 make_event('initnumplayers', False)
 
 while not done:
     screen.fill(background)
     for event in pygame.event.get():
-        if event.type == pygame.USEREVENT:
-            if event.__dict__["error"] == False:
-                if event.__dict__["name"] != 'cancelnext': # not a cancel
-                    if current_event not in ['submitnext', "accuse", "trust", "known", "propose_team", "vote", "quest"]:
-                        prev_event = current_event
-                    current_event = event.__dict__["name"]
-                else: # it is a cancel
-                    if not current_event in ['mainstate', 'initnumplayers']: # you can cancel things not in the list
-                        current_event = prev_event
-                        main_game.reset()
-                    else: # you tried canceling things in the list
-                        make_event("Can't cancel now!", True)
-                print("Current event:", current_event)
-                print("Previous event:", prev_event)
         if event.type == pygame.QUIT:
             done = True
-        
+        elif event.type == pygame.USEREVENT and event.__dict__["error"] == False:
+            # not a cancel
+            if event.__dict__["name"] != 'cancelnext':
+                # keep track of the previous event
+                if current_event not in ['submitnext']:
+                    prev_event = current_event
+                # update the current event
+                current_event = event.__dict__["name"]
+            # it is a cancel
+            else: 
+                # you cannot cancel the things in the list
+                if not current_event in ['mainstate', 'initnumplayers']: 
+                    current_event = prev_event
+                    main_game.reset()
+                # you tried canceling things in the list
+                else: 
+                    make_event("Can't cancel now!", True)
+            print("Current event:", current_event)
+            print("Previous event:", prev_event)
         for item in items:
             item.handle_event(event)
-
     for item in items:
         item.update()
-
     pygame.display.flip()
     clock.tick(30)
