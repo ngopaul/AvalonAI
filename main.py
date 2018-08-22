@@ -157,18 +157,18 @@ class Avalon:
             self.args_error()
             return
         if (not (player_accusing in self.feelings)):
-            self.feelings[player_accusing] = [{}, {player_accused : [self.current_time]}]
+            self.feelings[player_accusing] = [{}, {player_accused : [self.current_time()]}]
         else:
-            self.feelings[player_accusing][1][player_accused].append(self.current_time)
+            self.feelings[player_accusing][1][player_accused].append(self.current_time())
         
     def trust(self, player_trusting, player_trusted):
         if not (check_person(self, player_trusting) and check_person(self, player_trusted) and player_trusting != player_trusted):
             self.args_error()
             return
         if (not (player_trusting in self.feelings)):
-            self.feelings[player_trusting] = [{player_trusted : [self.current_time]}, {}]
+            self.feelings[player_trusting] = [{player_trusted : [self.current_time()]}, {}]
         else:
-            self.feelings[player_trusting][0][player_trusted].append(self.current_time)
+            self.feelings[player_trusting][0][player_trusted].append(self.current_time())
 
     """ Returns the index of the last item in proposal array. """
     def current_time(self):
@@ -182,7 +182,7 @@ class Avalon:
         self.known_players[person] = role
 
     """ The current leader proposes a team. """
-    def propose_team(self, proposed_team, current_quest, max_people, proceed, command_line = False):
+    def propose_team(self, proposed_team, current_quest, max_people, proceed = 'y', command_line = False):
         if (current_quest != self.cur_quest() or max_people != self.people_per_quest[self.cur_quest()] or not proceed.lower() in ['y', 'n']):
             self.args_error()
             return

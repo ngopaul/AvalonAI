@@ -22,43 +22,81 @@ event_dict = {
     'chooseroles' : 37270
 }
 
+def make_event(eventname, errorstate):
+    new_event = pygame.event.Event(pygame.USEREVENT, {"name": eventname, "error": errorstate})
+    pygame.event.post(new_event)
+
 class MainGame:
     def __init__(self):
         self.num_players = 0
         self.a = Avalon(1)
+        self.accuse = []
+        self.trust = []
+        self.proposed_team = []
+        self.vote_list  = []
+        self.known = []
+        self.quest_votes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+
+    def reset(self):
+        self.accuse = []
+        self.trust = []
+        self.proposed_team = []
+        self.vote_list = [0 for i in range(self.num_players)]
+        self.known = []
+        self.quest_votes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        players.deactivate()
 
     def update(self):
         pass
     
     def handle_event(self, event):
-        if event.type == pygame.USEREVENT:
+        if event.type == pygame.USEREVENT and not event.__dict__['error']:
             try: # to catch errors and instead throw an Event error
-                if current_event == "submitnext" and prev_event == "chooseroles":
-                    role_types = {'Normal Bad': 0, 'Normal Good': 0, 'Merlin': 0, 'Percival': 0, 'Morgana': 0, 'Mordred': 0, 'Oberon': 0}
-                    for role in roles_involved:
-                        if role.active:
-                            role_types[role.text] += 1
-                    role_types['Normal Bad'] = player_alignment[self.num_players][1] - (role_types['Morgana'] + role_types['Mordred'] + role_types['Oberon'])
-                    role_types['Normal Good'] = player_alignment[self.num_players][0] - (role_types['Merlin'] + role_types['Percival'])
-                    if role_types['Normal Bad'] < 0 or role_types['Normal Good'] < 0: # selected too many roles
-                        assert 1 == 0
-                    self.a.initialize(self.num_players, role_types, 0)
+                if current_event == "submitnext":
+                    if prev_event == "chooseroles":
+                        role_types = {'Normal Bad': 0, 'Normal Good': 0, 'Merlin': 0, 'Percival': 0, 'Morgana': 0, 'Mordred': 0, 'Oberon': 0}
+                        for role in roles_involved:
+                            if role.active:
+                                role_types[role.text] += 1
+                        role_types['Normal Bad'] = player_alignment[self.num_players][1] - (role_types['Morgana'] + role_types['Mordred'] + role_types['Oberon'])
+                        role_types['Normal Good'] = player_alignment[self.num_players][0] - (role_types['Merlin'] + role_types['Percival'])
+                        if role_types['Normal Bad'] < 0 or role_types['Normal Good'] < 0: # selected too many roles
+                            assert 1 == 0
+                        self.a.initialize(self.num_players, role_types, 0)
 
-                    # making all the players
-                    for i in range(self.num_players):
-                        players.append(Player(i))
-                    # making all the commands
-                    for command in list_commands:
-                        commands.append(CheckBox(checkbox_loc[0], checkbox_loc[1],command,'radio', COLOR_INACTIVE, 'mainstate'))
-                        checkbox_loc[1] += 25
-                    
-                    roles_involved.items = [] # to save on time
-                    new_event = pygame.event.Event(pygame.USEREVENT, {"name": "mainstate", "error": False})
-                    pygame.event.post(new_event)
-                    
+                        # making all the players
+                        for i in range(self.num_players):
+                            players.append(Player(i))
+                        # making all the commands
+                        for command in list_commands:
+                            commands.append(CheckBox(checkbox_loc[0], checkbox_loc[1],command,'radio', COLOR_INACTIVE, 'mainstate', command))
+                            checkbox_loc[1] += 25
+                        # prepopulating vote_list
+                        self.vote_list = [0 for i in range(self.num_players)]
+
+                        roles_involved.items = [] # to save on time
+                        make_event("mainstate", False)
+                    elif prev_event == "accuse":
+                        assert len(self.accuse) == 2
+                        self.a.accuse(self.accuse[0], self.accuse[1])
+                    elif prev_event == "trust":
+                        assert len(self.trust) == 2
+                        self.a.trust(self.trust[0], self.trust[1])
+                    elif prev_event == "known":
+                        assert len(self.known) == 2
+                        self.a.known(self.known[0], self.known[1])
+                    elif prev_event == "propose_team":
+                        self.a.propose_team(self.proposed_team, self.a.cur_quest(), self.a.people_per_quest[self.a.cur_quest()], 'y', True)
+                    elif prev_event == "vote":
+                        self.a.vote(self.vote_list.count(1), self.vote_list.count(0), self.vote_list, True)
+                    elif prev_event == "quest":
+                        self.a.quest(self.a.quest_state[5], self.quest_votes[:self.a.people_per_quest[self.a.cur_quest()]], self.a.cur_quest(), True)
+                    main_game.a.print_all()
+                    print("\n")
+                    make_event('mainstate', False)
+                    self.reset()
             except:
-                new_event = pygame.event.Event(pygame.USEREVENT, {"name": "Improper Input", "error": True})
-                pygame.event.post(new_event)
+                make_event("Improper Input", True)
 
 
     def parse(self, inpt):
@@ -67,15 +105,12 @@ class MainGame:
             try:
                 self.num_players = int(inpt)
                 if 5 <= self.num_players <= 10:
-                    new_event = pygame.event.Event(pygame.USEREVENT, {"name": "chooseroles", "error": False})
-                    pygame.event.post(new_event)
+                    make_event("chooseroles", False)
                 else:
-                    new_event = pygame.event.Event(pygame.USEREVENT, {"name": "Wrong Number of Players", "error": True})
-                    pygame.event.post(new_event)
+                    make_event("Wrong Number of Players", True)
             except:
                 print("Throwing error.")
-                new_event = pygame.event.Event(pygame.USEREVENT, {"name": "Improper Input", "error": True})
-                pygame.event.post(new_event)
+                make_event("Improper Input", True)
 
 class InputBox:
     def __init__(self, x, y, w, h, text=''):
@@ -155,9 +190,21 @@ class MainText(TextOut):
         if current_event == 'initnumplayers':
             self.text = "How many players?"
         elif current_event == 'chooseroles':
-            self.text = "Choose the roles involved."
+            self.text = "Choose the roles involved. "
         elif current_event == 'mainstate':
-            self.text = "Choose an action."
+            self.text = "Choose an action. "
+        elif current_event == 'accuse':
+            self.text = "Choose a person accusing and accused. " + str(main_game.accuse)
+        elif current_event == 'trust':
+            self.text = "Choose person trusting and trusted. " + str(main_game.trust)
+        elif current_event == 'known':
+            self.text = "Choose known person. " + str(main_game.known)
+        elif current_event == 'propose_team':
+            self.text = "Choose team. " + str(main_game.proposed_team)
+        elif current_event == 'vote':
+            self.text = "Select yes votes. " + str(main_game.vote_list)
+        elif current_event == 'quest':
+            self.text = "Type number of fails. " + str(main_game.quest_votes[:main_game.a.people_per_quest[main_game.a.cur_quest()]])
         self.txt_surface = FONT.render(self.text, True, self.color)
         self.txt_surface_clear = FONT.render(self.text, True, background)
         self.draw(screen)
@@ -189,7 +236,7 @@ class ErrText(TextOut):
             self.draw(screen)
 
 class CheckBox(TextOut):
-    def __init__(self, x, y, text, typeof = 'check', color = COLOR_INACTIVE, activeevent = 'chooseroles'): # another type would be radio
+    def __init__(self, x, y, text, typeof = 'check', color = COLOR_INACTIVE, activeevent = 'chooseroles', activation = ''): # another type would be radio
         self.x = x
         self.y = y
         self.color = color
@@ -200,6 +247,7 @@ class CheckBox(TextOut):
         self.active = False
         self.typeof = typeof
         self.activeevent = activeevent
+        self.activation = activation
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
@@ -207,6 +255,9 @@ class CheckBox(TextOut):
             if self.rect.collidepoint(event.pos):
                 # Toggle the active variable.
                 self.active = not self.active
+                if self.activation != '':
+                    make_event(self.activation, False)
+                    self.active = not self.active
             # Change the current color of the box.
             self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
     
@@ -236,8 +287,7 @@ class Button():
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if self.imagerect.collidepoint(event.pos):
-                new_event = pygame.event.Event(pygame.USEREVENT, {"name": self.eventtype, "error": False})
-                pygame.event.post(new_event)
+                make_event(self.eventtype, False)
     
     def update(self):
         self.draw(screen)
@@ -274,10 +324,15 @@ class ManyItems():
     def append(self, item):
         self.items.append(item)
 
+    def deactivate(self):
+        for item in self.items:
+            item.active = False
+
 class Player():
     def __init__(self, number):
         theta = 2 * pi * number / main_game.num_players
         r = 100
+        self.number = number
         self.x, self.y = polar_to_cartesian(r, theta)
         self.x = int(self.x + 640) # center x and y
         self.y = int(self.y + 400)
@@ -290,10 +345,53 @@ class Player():
             if self.rect.collidepoint(event.pos):
                 # Toggle the active variable.
                 self.active = not self.active
+
+                # Do the current action's work (for each action)
+
+                if current_event == "accuse":
+                    if self.active and len(main_game.accuse) < 2: # you selected it
+                        main_game.accuse.append(self.number)
+                    elif not self.active: # you deselected it
+                        try:
+                            main_game.accuse.remove(self.number)
+                        except:
+                            pass
+                    print("accuse:", main_game.accuse)
+                elif current_event == "trust":
+                    if self.active and len(main_game.trust) < 2: # you selected it
+                        main_game.trust.append(self.number)
+                    elif not self.active: # you deselected it
+                        try:
+                            main_game.trust.remove(self.number)
+                        except:
+                            pass
+                    print("trust:", main_game.trust)
+                elif current_event == "propose_team":
+                    if self.active: # you selected it
+                        main_game.proposed_team.append(self.number)
+                    elif not self.active: # you deselected it
+                        try:
+                            main_game.proposed_team.remove(self.number)
+                        except:
+                            pass
+                    print("proposed team:", main_game.proposed_team)
+                elif current_event == "vote":
+                    if self.active: # you selected it
+                        main_game.vote_list[self.number] = 1
+                    else: # you deselected it
+                        main_game.vote_list[self.number] = 0
+                    print("current votes:", main_game.vote_list)
+                elif current_event == "quest":
+                    if self.active: # you selected it
+                        main_game.quest_votes[self.number] = 1
+                    else: # you deselected it
+                        main_game.quest_votes[self.number] = 0
+                    print("current quest outcome:", main_game.quest_votes[:main_game.a.people_per_quest[main_game.a.cur_quest()]])
             # Change the current color of the box.
             self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
 
     def update(self):
+        self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
         self.draw(screen)
 
     def draw(self, screen):
@@ -337,8 +435,7 @@ items = [main_game, players, commands, input_box1, main_text, err_text, submit_b
 
 prev_event = ""
 current_event = ""
-event1 = pygame.event.Event(pygame.USEREVENT, {"name" : 'initnumplayers', "error" : False})
-pygame.event.post(event1)
+make_event('initnumplayers', False)
 
 while not done:
     screen.fill(background)
@@ -346,15 +443,15 @@ while not done:
         if event.type == pygame.USEREVENT:
             if event.__dict__["error"] == False:
                 if event.__dict__["name"] != 'cancelnext': # not a cancel
-                    if current_event != 'submitnext':
+                    if current_event not in ['submitnext', "accuse", "trust", "known", "propose_team", "vote", "quest"]:
                         prev_event = current_event
                     current_event = event.__dict__["name"]
                 else: # it is a cancel
                     if not current_event in ['mainstate', 'initnumplayers']: # you can cancel things not in the list
                         current_event = prev_event
+                        main_game.reset()
                     else: # you tried canceling things in the list
-                        new_event = pygame.event.Event(pygame.USEREVENT, {"name": "Can't cancel now!", "error": True})
-                        pygame.event.post(new_event)
+                        make_event("Can't cancel now!", True)
                 print("Current event:", current_event)
                 print("Previous event:", prev_event)
         if event.type == pygame.QUIT:
