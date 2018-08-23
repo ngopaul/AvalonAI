@@ -100,6 +100,9 @@ def test1():
     # print(get_known_players(a))
     # print(create_possibilities(a))
     
+    a.known([0, 5], 3)
+    a.known([0, 5], 4)
+
     ana = Analysis(a)
     ana.start_analysis()
     ana.analyze()

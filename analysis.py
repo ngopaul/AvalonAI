@@ -61,7 +61,7 @@ class Analysis:
         rows = self.c.fetchall()
         iterator = reversed(rows)
         for i in range(min(limit, len(rows))):
-             print(row_to_roles(next(iterator)))
+            print(row_to_roles(next(iterator)))
 
     """ Applies any heuristics for a role_set guess. This is the front end for managing all our
     weights for all of our heurisitics. """

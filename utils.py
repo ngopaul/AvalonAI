@@ -79,7 +79,11 @@ def get_all_players(a):
 def known_to_where_statement(a):
     to_return = ""
     for pair in get_known_players(a): # loop to add to our WHERE statement
-        to_return += "a" + str(pair[0] + 1) + ".role" + " = " + str(pair[1]) + " AND "
+        # pair is: (player num, set(role_nums they must be))
+        to_return += "("
+        for role in pair[1]:
+            to_return += "a" + str(pair[0] + 1) + ".role" + " = " + str(role) + " OR "
+        to_return = to_return[:-3] + ") AND "
     if to_return == "":
         return ""
     else:
@@ -173,5 +177,21 @@ def polar_to_cartesian(r, theta):
     x = r * cos(theta)
     y = r * sin(theta)
     return(x, y)
+
+def cartesian_to_polar(x, y):
+    r = (x ** 2 + y ** 2) ** .5
+    if y >= 0 and x > 0:
+        theta = 0
+        theta += atan(y / x)
+    elif x <= 0 and y > 0:
+        theta = pi/2
+        theta += pi/2 + atan(y / x)
+    elif x < 0 and y <= 0:
+        theta = pi
+        theta += atan(y / x)
+    elif x >= 0 and y < 0:
+        theta = 3 * pi / 2
+        theta += pi/2 + atan(y / x)
+    return r, theta
 
 player_alignment = {5: [3, 2], 6: [4, 2], 7: [4, 3], 8: [5, 3], 9: [6, 3], 10: [6, 4]}

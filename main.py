@@ -175,11 +175,11 @@ class Avalon:
         return len(self.propose_history) - 1
 
     """ The person using the AI knows the alignment of a player. """
-    def known(self, role, person):
-        if not (check_person(self, person) and check_role(role)):
+    def known(self, roles, person):
+        if not (check_person(self, person) and all([check_role(role) for role in roles])):
             self.args_error()
             return
-        self.known_players[person] = role
+        self.known_players[person] = set(roles)
 
     """ The current leader proposes a team. """
     def propose_team(self, proposed_team, current_quest, max_people, proceed = 'y', command_line = False):
@@ -301,9 +301,9 @@ if __name__ == '__main__':
         elif (user_input == "break" or user_input == "quit"):
             break
         elif (user_input == "known" or user_input == "kn"):
-            role = sanitised_input("Which role? ", int, 0, 6)
+            roles = [int(x) for x in input("Which roles, separated by spaces?").split()]
             person = sanitised_input("Which person? ", int, 0, a.num_players - 1)
-            a.known(role, person)
+            a.known(roles, person)
         elif (user_input == "guessmerlin" or user_input == "gm"):
             guess = sanitised_input("Who do you think is Merlin? ", int, 0, a.num_players - 1)
             actual = sanitised_input("Who is actually Merlin? ", int, 0, a.num_players - 1)
