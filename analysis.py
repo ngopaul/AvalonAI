@@ -165,11 +165,11 @@ class Analysis:
         # Find index of merlin
         # Find index of Loyal Servants
         # Using merlin in self.feelings, access his trusted and mistrust dictionaries and compare the most recent between those two values
-        for r in role_set:
-            if r == 1: # Loyal Servant of Arthur
-                servants.append(role_set.index(r))
-            if r == 2: # Merlin 
-                merlin_index = role_set.index(r)
+        for r in range(len(role_set)):
+            if role_set[r] == 1:
+                servants.append(r)
+            if role_set[r] == 2:
+                merlin = r
         if merlin in self.a.feelings: # Check if Merlin has feelings!
             merlin_feelings = self.a.feelings[merlin_index]
             for servant in servants:
