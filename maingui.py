@@ -66,6 +66,8 @@ class MainGame:
         pass
     
     def handle_event(self, event):
+        if self.a.game_state < 2:
+            commands_change(['analyze'])
         if event.type == pygame.USEREVENT and not event.__dict__['error']:
             try: # to catch errors and instead throw an Event error
                 if current_event == "submitnext":
@@ -83,6 +85,10 @@ class MainGame:
                         # making all the players
                         for i in range(self.num_players):
                             players.append(Player(i))
+
+                        # making the rotate buttons
+                        rotate_buttons.append(Rotate(600, 320, pygame.image.load("arrowleft.png"),pi/40))
+                        rotate_buttons.append(Rotate(640, 320, pygame.image.load("arrowright.png"),-pi/40))
                         
                         # prepopulating vote_list
                         self.vote_list = [0 for i in range(self.num_players)]
@@ -121,17 +127,19 @@ class MainGame:
                         self.reset()
                         commands_change(["accuse", "trust", 'known', 'propose_team', 'analyze'])
                     elif prev_event == "vote":
-                        self.a.vote(self.vote_list.count(1), self.vote_list.count(0), self.vote_list, True)
-                        commands_change(['quest'])
-                        self.reset()
+                        continue_to_quest = self.a.vote(self.vote_list.count(1), self.vote_list.count(0), self.vote_list, True)
+                        if continue_to_quest:
+                            commands_change(['quest'])
+                            self.reset()
+                        else:
+                            commands_change(["accuse", "trust", 'known', 'propose_team', 'analyze'])
+                            self.reset()
                     elif prev_event == "quest":
                         self.a.quest(self.a.quest_state[5], self.quest_votes[:self.a.people_per_quest[self.a.cur_quest()]], self.a.cur_quest(), True)
                         if self.a.game_state > 2:
                             commands_change(["accuse", "trust", 'known', 'propose_team', 'analyze'])
                         elif self.a.game_state == 2:
                             commands_change(["guess_merlin", 'analyze'])
-                        else:
-                            commands_change([""])
                         self.reset()
                     elif prev_event == "analyze":
                         self.ana = Analysis(self.a)
@@ -276,8 +284,10 @@ class MainText(TextOut):
             self.text = "Choose person trusting and trusted. " + str(main_game.trust)
         elif current_event == 'known':
             self.text = "Choose known person. " + str(main_game.known_player) + " is " + str([num_to_names[name] for name in main_game.known])
-        elif current_event in ['propose_team', 'proceed_on_proposed', 'cancel_on_proposed']:
+        elif current_event in ['propose_team']:
             self.text = "Proposing team of " + str(main_game.a.people_per_quest[main_game.a.cur_quest()]) + " people: " + str(main_game.proposed_team)
+        elif current_event in ['proceed_on_proposed', 'cancel_on_proposed']:
+            self.text = "Click the check mark to confirm proceeding/canceling team: " + str(main_game.a.people_per_quest[main_game.a.cur_quest()]) + " people: " + str(main_game.proposed_team)
         elif current_event == 'vote':
             self.text = "Select yes votes. " + str(main_game.vote_list)
         elif current_event == 'quest':
@@ -384,8 +394,6 @@ class Button():
         self.imagerect = image.get_rect()
         self.imagerect.left = self.x
         self.imagerect.top = self.y
-        self.width = image.get_width()
-        self.height = image.get_height()
         self.typeof = typeof
         self.eventtype = eventtype
         self.hidelist = hidelist
@@ -410,6 +418,7 @@ class Button():
 class ManyItems():
     def __init__(self, items):
         self.items = items
+        self.angle = 0
     
     def handle_event(self, event):
         for item in self.items:
@@ -418,6 +427,11 @@ class ManyItems():
     def update(self):
         for item in self.items:
             item.update()
+        for i in range(len(self.items)):
+            if isinstance(self.items[i], Player):
+                theta = 2 * pi * i / main_game.num_players + self.angle
+                r = 100
+                self.items[i].reposition(r, theta)
 
     def draw(self, screen):
         for item in self.items:
@@ -439,6 +453,9 @@ class ManyItems():
     def deactivate(self):
         for item in self.items:
             item.active = False
+    
+    def length(self):
+        return len(self.items)
 
 class Player():
     def __init__(self, number):
@@ -447,7 +464,7 @@ class Player():
         self.number = number
         self.x, self.y = polar_to_cartesian(r, theta)
         self.x = int(self.x + 640) # center x and y
-        self.y = int(self.y + 400)
+        self.y = int(self.y + 200)
         self.active = False
         self.color = COLOR_INACTIVE
         self.rect = pygame.Rect(self.x - 15, self.y - 15, 30, 30)
@@ -456,7 +473,7 @@ class Player():
     def reposition(self, r, theta):
         self.x, self.y = polar_to_cartesian(r, theta)
         self.x = int(self.x + 640) # center x and y
-        self.y = int(self.y + 400)
+        self.y = int(self.y + 200)
         self.rect = pygame.Rect(self.x - 15, self.y - 15, 30, 30)
         self.txt_surface = FONT.render(str(self.number), True, (0, 0, 0))
     
@@ -534,8 +551,7 @@ class Player():
         screen.blit(self.txt_surface, (self.x - 7, self.y - 9))
 
 class Rotate():
-    # FIXXXX!!!
-    def __init__(self, x, y, image, eventtype = 'submitnext', typeof = 'activate', hidelist = []): #also toggle
+    def __init__(self, x, y, image, rotation):
         self.x = x
         self.y = y
         self.image = image
@@ -544,26 +560,55 @@ class Rotate():
         self.imagerect.top = self.y
         self.width = image.get_width()
         self.height = image.get_height()
-        self.typeof = typeof
-        self.eventtype = eventtype
-        self.hidelist = hidelist
+        self.rotation = rotation
 
     def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.imagerect.collidepoint(event.pos):
-                make_event(self.eventtype, False)
+        pass
     
     def update(self):
-        if current_event not in self.hidelist:
-            self.draw(screen)
-        else:
-            self.clear()
+        # if the mouse is down and is in the picture
+        if self.imagerect.collidepoint(pygame.mouse.get_pos()):
+            if pygame.mouse.get_pressed()[0]:
+                players.angle += self.rotation
+        self.draw(screen)
     
     def clear(self):
         pygame.draw.rect(screen, background, self.imagerect, 0)
 
     def draw(self, screen):
         screen.blit(self.image, self.imagerect)
+
+class Token():
+    def __init__(self, x, y, image):
+        self.x = x
+        self.y = y
+        self.image = image
+        self.imagerect = image.get_rect()
+        self.imagerect.left = self.x
+        self.imagerect.top = self.y
+    
+    def update(self):
+        self.draw(screen)
+    
+    def draw(self, screen):
+        screen.blit(self.image, self.imagerect)
+
+class GameBoard():
+    def __init__(self):
+        self.board = pygame.image.load("7playerboard.jpg")
+        self.quests = ManyItems([])
+        self.rejected = 0
+    
+    def update(self):
+        if self.quests.length < len(main_game.a.quest_history):
+            self.quests.append(Token())
+        self.rejected = main_game.a.quest_state[5]
+        self.draw(screen)
+    
+    def draw(self, screen):
+        
+    
+
 
 done = False
 clock = pygame.time.Clock()
@@ -589,6 +634,8 @@ known_selection = ManyItems(roleselectboxes)
 commands = ManyItems([])
 # we'll initialize PLAYERS later.
 players = ManyItems([])
+# we'll initialize ROTATE buttons later.
+rotate_buttons = ManyItems([])
 
 # Our main input box for text input
 main_input = InputBox(100, 100, 140, 32, hidelist=['chooseroles', 'mainstate', 
@@ -605,7 +652,7 @@ submit_button = Button(990, 30, pygame.image.load("checkmark.png"), hidelist = [
 cancel_button = Button(1030, 30, pygame.image.load("xmark.png"), 'cancelnext', hidelist = ['initnumplayers'])
 
 # we iterate through our items to update them
-items = [main_game, players, commands, main_input, main_text, err_text, submit_button, cancel_button, roles_involved, known_selection]
+items = [main_game, players, rotate_buttons, commands, main_input, main_text, err_text, submit_button, cancel_button, roles_involved, known_selection]
 
 # keeping track of the state of the game
 prev_event = ""

@@ -225,8 +225,11 @@ class Avalon:
             return 1
         else:
             self.quest_state[5] += 1 # Increment rejected tally
-            self.change_current_leader()
-            return 0
+            if self.quest_state[5] == 5:
+                self.game_state = 0
+            else:
+                self.change_current_leader()
+                return 0
 
     """ We said we didn't want to vote after the proposal... but we did want to """
     def force_vote(self, approved_counts, rejected_counts, vote_list):
