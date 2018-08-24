@@ -606,9 +606,7 @@ class GameBoard():
         self.draw(screen)
     
     def draw(self, screen):
-        
-    
-
+        pass
 
 done = False
 clock = pygame.time.Clock()

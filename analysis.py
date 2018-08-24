@@ -66,7 +66,7 @@ class Analysis:
     """ Applies any heuristics for a role_set guess. This is the front end for managing all our
     weights for all of our heurisitics. """
     def apply_heuristics(self, role_set, weights=[1, 1, 1, 1, 1, 1]):
-        heurisitics_set = [self.mm_coordinate]
+        heurisitics_set = [self.mm_coordinate, self.sa_merlin_change_of_heart]
         score = 0.0
         for i in range(len(heurisitics_set)):
             score += weights[i] * heurisitics_set[i](role_set)
@@ -148,6 +148,8 @@ class Analysis:
     Please write out the strategies that you think are valid for Servants, i.e. what would a servant do?
 
     """
+    def sa_merlin_trusts_good(self, role_set):
+        pass
 
     # Merlin is the first to vote against a bad person on a quest
     def sa_merlin_predicts(self, role_set):
@@ -164,12 +166,12 @@ class Analysis:
         # Using merlin in self.feelings, access his trusted and mistrust dictionaries and compare the most recent between those two values
         for r in range(len(role_set)):
             if r == 1: # Loyal Servant of Arthur
-                servant_indices.append(role_set.index(r))
+                servants.append(role_set.index(r))
             if r == 2: # Merlin 
                 merlin_index = role_set.index(r)
-        if merlin in a.feelings: # Check if Merlin has feelings!
-            merlin_feelings = a.feelings[merlin_index]
-            for servant in servant_indices:
+        if merlin in self.a.feelings: # Check if Merlin has feelings!
+            merlin_feelings = self.a.feelings[merlin_index]
+            for servant in servants:
                 trust_weight, mistrust_weight = 0, 0
                 if servant in merlin_feelings[0]:
                     trust_weight = merlin_feelings[0][servant][-1]
