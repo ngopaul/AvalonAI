@@ -182,4 +182,5 @@ class Analysis:
         else: # If Merlin has no feelings, heuristic is USELESS!
             return 0
 
-
+    def add_1(self, role_set):
+        return 1
