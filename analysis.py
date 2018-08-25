@@ -66,8 +66,9 @@ class Analysis:
     """ Applies any heuristics for a role_set guess. This is the front end for managing all our
     weights for all of our heurisitics. """
     def apply_heuristics(self, role_set, weights=[1, 1, 1, 1, 1, 1]):
-        heurisitics_set = [self.mm_coordinate, self.sa_merlin_change_of_heart, 
-        self.sa_merlin_trusts_good_mistrusts_bad, self.sa_merlin_quests_good, self.general_vote]
+        heurisitics_set = [self.mm_coordinate, self.sa_merlin_trusts_good_mistrusts_bad, 
+        self.sa_merlin_quests_good, self.general_vote,
+        self.filter_impossibles]
         score = 0.0
         for i in range(len(heurisitics_set)):
             score += weights[i] * heurisitics_set[i](role_set)
@@ -93,7 +94,7 @@ class Analysis:
 
     """ Returns two lists of the player's current feelings about other players in the game. 
     Returns two blank lists if no feeligs. 
-    i.e. return [2, 4], [0, 1] 
+    i.e. return [2,/ 4], [0, 1] 
     In order of trust and mistrust. """
     def current_feelings(self, player_num):
         trusts, mistrusts = [], []
@@ -163,17 +164,17 @@ class Analysis:
                 if bad_role in proposal_roles:
                     state = -1
             propose_goodness.append(state)
-        print("PROPOSE GOODNESS:",propose_goodness)
-        print("PROPOSE IMPORTANCE:",propose_importance)
+        # print("PROPOSE GOODNESS:",propose_goodness)
+        # print("PROPOSE IMPORTANCE:",propose_importance)
         # iterating through people to look at their votes. We can then score them and put into scores.
         for i in range(len(role_set)): # i is the person number
             # votes turn into +1 or -1, or 0 if there was no vote
             votes = [vote[i] * 2 - 1 if len(vote) > 0 else 0 for vote in self.a.vote_history]
             scores[i] = sum([votes[i]*propose_goodness[i]*propose_importance[i] for i in range(len(votes))])
 
-        scores = [scores[i] + self.player_values[i] for i in range(len(scores))]
+        scores = [1/2 * scores[i] + self.player_values[i] for i in range(len(scores))]
         # Tailored ideas to differentiate and add points properly
-        print("SCORES:", scores)
+        # print("SCORES:", scores)
         # Merlin is the most good
         if 2 in role_set:
             if scores[role_set.index(2)] == max(scores):
@@ -190,9 +191,33 @@ class Analysis:
             else:
                 final_scores.append(scores[i])
         points += sigmoid(sum(final_scores))
-        print("FINAL SCORES:", final_scores)
-        print("Points", points)
+        # print("FINAL SCORES:", final_scores)
+        # print("Points", points)
         return round(points, 2)
+
+    # heuristics to handle obvious cases
+    def filter_impossibles(self, role_set):
+        role_impossible = False
+        quests_failed_index = []
+        for quest in self.a.quest_history:
+            if quest[1] == 0:
+                quests_failed_index.append(quest[0])
+        
+        for failed_quest_index in quests_failed_index:
+            # guy put on a team is good--- 0. is bad---1
+            good_or_bad = []
+            for person_index in self.a.propose_history[failed_quest_index]:
+                if role_set[person_index] in self.minion_set:
+                    good_or_bad.append(1)
+                else:
+                    good_or_bad.append(0)
+            if not 1 in good_or_bad:
+                role_impossible = True
+
+        if role_impossible:
+            return -99
+        return 0
+
 
     """ Heuristics for Minions of Mordred 
 
@@ -233,6 +258,7 @@ class Analysis:
     Please write out the strategies that you think are valid for Servants, i.e. what would a servant do?
 
     """
+
     # The Merlin trusts good people and mistrusts bad people.
     def sa_merlin_trusts_good_mistrusts_bad(self, role_set):
         if not 2 in role_set:
@@ -246,7 +272,7 @@ class Analysis:
         for person_num in mistrusts:
             if role_set[person_num] in self.minion_set:
                 points += 1
-        return 0 if total == 0 else round(points/total, 2)
+        return 0 if total == 0 else round(2 * points/total, 2)
 
     # Merlin puts good people on a quest. Also allows Merlin to put one 
     # bad person on a quest... This is for advanced players

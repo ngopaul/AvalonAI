@@ -75,8 +75,6 @@ def test1():
 
     a.accuse(2, 4)
     a.trust(2, 1)
-    a.accuse(1, 4)
-    a.trust(1, 2)
     a.accuse(3, 4)
     a.trust(3, 2)
 
