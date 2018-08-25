@@ -195,3 +195,6 @@ def cartesian_to_polar(x, y):
     return r, theta
 
 player_alignment = {5: [3, 2], 6: [4, 2], 7: [4, 3], 8: [5, 3], 9: [6, 3], 10: [6, 4]}
+
+def sigmoid(x):
+    return 1 / (1 + exp(-x)) + 1/5 * x

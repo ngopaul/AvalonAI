@@ -66,7 +66,8 @@ class Analysis:
     """ Applies any heuristics for a role_set guess. This is the front end for managing all our
     weights for all of our heurisitics. """
     def apply_heuristics(self, role_set, weights=[1, 1, 1, 1, 1, 1]):
-        heurisitics_set = [self.mm_coordinate, self.sa_merlin_change_of_heart]
+        heurisitics_set = [self.mm_coordinate, self.sa_merlin_change_of_heart, 
+        self.sa_merlin_trusts_good_mistrusts_bad, self.sa_merlin_quests_good, self.general_vote]
         score = 0.0
         for i in range(len(heurisitics_set)):
             score += weights[i] * heurisitics_set[i](role_set)
@@ -90,11 +91,44 @@ class Analysis:
             )
         return quest_importance
 
+    """ Returns two lists of the player's current feelings about other players in the game. 
+    Returns two blank lists if no feeligs. 
+    i.e. return [2, 4], [0, 1] 
+    In order of trust and mistrust. """
+    def current_feelings(self, player_num):
+        trusts, mistrusts = [], []
+        if not player_num in self.a.feelings:
+            return [], []
+        else:
+            trust_dict = self.a.feelings[player_num][0]
+            mistrust_dict = self.a.feelings[player_num][1]
+            for i in range(self.a.num_players):
+                if i in trust_dict and i in mistrust_dict and max(trust_dict[i]) > max(mistrust_dict[i]):
+                    trusts.append(i)
+                elif i in trust_dict and i in mistrust_dict and max(trust_dict[i]) <= max(mistrust_dict[i]):
+                    mistrusts.append(i)
+                elif i in trust_dict:
+                    trusts.append(i)
+                elif i in mistrust_dict:
+                    mistrusts.append(i)
+        return trusts, mistrusts
+
+    """ Returns all of the quests a certain player has proposed. 
+    Returns a list of proposals. """
+    def players_proposed(self, player_num):
+        toReturn = []
+        current_player = self.a.starting_leader
+        for proposal in self.a.propose_history:
+            if current_player == player_num:
+                toReturn.append(proposal)
+            current_player = (current_player + 1) % self.a.num_players
+        return toReturn
 
     """ General Heuristics """
 
     # Check how a player has voted. The farther the vote is in the game, or closer it is 
     # to a victory for one side, the more it matters.
+    # DO NOT USE FOR HEURISTIC
     def vote(self, player):
         passed_votes = passed_votes_history(self.a)
         quest_history = [quest[1] * 2 - 1 for quest in self.a.quest_history] # +1 for success, -1 for fail
@@ -112,6 +146,53 @@ class Analysis:
     # +(#good which Percival is greater than - #ofMerlin)/(total number of good - 1 - #pfMerlin)
     # +1 point for each 'bad' which is in the top #ofBad 'bad'.
 
+    # handles each player type and assigns scores to how they vote on quests of people.
+    def general_vote(self, role_set):
+        points = 0
+        scores = [0 for i in range(len(role_set))]
+        importance = self.importance_factor()
+        # list of 1's and -1's which represent there being all good, or not all good people on the team.
+        propose_goodness = []
+        # list of importance numbers based on the quest that is currently being proposed
+        propose_importance = [importance[self.a.quest_of_time(i)] for i in range(len(self.a.propose_history))]
+        # filling up propose_goodness
+        for proposal in self.a.propose_history:
+            state = 1
+            proposal_roles = [role_set[person] for person in proposal]
+            for bad_role in self.minion_set:
+                if bad_role in proposal_roles:
+                    state = -1
+            propose_goodness.append(state)
+        print("PROPOSE GOODNESS:",propose_goodness)
+        print("PROPOSE IMPORTANCE:",propose_importance)
+        # iterating through people to look at their votes. We can then score them and put into scores.
+        for i in range(len(role_set)): # i is the person number
+            # votes turn into +1 or -1, or 0 if there was no vote
+            votes = [vote[i] * 2 - 1 if len(vote) > 0 else 0 for vote in self.a.vote_history]
+            scores[i] = sum([votes[i]*propose_goodness[i]*propose_importance[i] for i in range(len(votes))])
+
+        scores = [scores[i] + self.player_values[i] for i in range(len(scores))]
+        # Tailored ideas to differentiate and add points properly
+        print("SCORES:", scores)
+        # Merlin is the most good
+        if 2 in role_set:
+            if scores[role_set.index(2)] == max(scores):
+                points += 1
+        # The most bad is a bad person
+        if role_set[scores.index(min(scores))] in self.minion_set:
+            points += 1
+
+        # the final scoring
+        final_scores = []
+        for i in range(len(scores)):
+            if role_set[i] in self.minion_set:
+                final_scores.append(scores[i] * -1)
+            else:
+                final_scores.append(scores[i])
+        points += sigmoid(sum(final_scores))
+        print("FINAL SCORES:", final_scores)
+        print("Points", points)
+        return round(points, 2)
 
     """ Heuristics for Minions of Mordred 
 
@@ -141,24 +222,55 @@ class Analysis:
             amount /= num_minions
             value += quest_importance[i] * max(amount, 1-amount)
         return value
-            
+
+    # when other people think a minion is bad, then another minion joins in and 
+    # agrees with the group.        
+    def mm_throw_under_the_bus(self, role_set):
+        pass
 
     """ Heuristics for Servants of Arthur 
 
     Please write out the strategies that you think are valid for Servants, i.e. what would a servant do?
 
     """
-    def sa_merlin_trusts_good(self, role_set):
-        pass
+    # The Merlin trusts good people and mistrusts bad people.
+    def sa_merlin_trusts_good_mistrusts_bad(self, role_set):
+        if not 2 in role_set:
+            return 0
+        trusts, mistrusts = self.current_feelings(role_set.index(2))
+        total = len(trusts) + len(mistrusts)
+        points = 0
+        for person_num in trusts:
+            if role_set[person_num] in self.servant_set:
+                points += 1
+        for person_num in mistrusts:
+            if role_set[person_num] in self.minion_set:
+                points += 1
+        return 0 if total == 0 else round(points/total, 2)
 
-    # Merlin is the first to vote against a bad person on a quest
-    def sa_merlin_predicts(self, role_set):
-        pass
+    # Merlin puts good people on a quest. Also allows Merlin to put one 
+    # bad person on a quest... This is for advanced players
+    def sa_merlin_quests_good(self, role_set):
+        if not 2 in role_set:
+            return 0
+        merlins_proposed = self.players_proposed(role_set.index(2))
+        total = sum([len(proposal) for proposal in merlins_proposed])
+        score = 0
+        for proposal in merlins_proposed:
+            bad_count = 0
+            for person in proposal:
+                if role_set[person] in self.servant_set:
+                    score += 1
+                if bad_count == 0 and role_set[person] in self.minion_set:
+                    score += 1
+                    bad_count += 1
+        return 0 if total == 0 else round(score/total, 2)
 
     # Merlin starts trusting someone who is good,
     # when previously they were pretending to not trust the person
     def sa_merlin_change_of_heart(self, role_set):
-        print(role_set)  
+        if not 2 in role_set:
+            return 0
         heuristics = []
         merlin = -1000
         servants = []
@@ -171,7 +283,7 @@ class Analysis:
             if role_set[r] == 2:
                 merlin = r
         if merlin in self.a.feelings: # Check if Merlin has feelings!
-            merlin_feelings = self.a.feelings[merlin_index]
+            merlin_feelings = self.a.feelings[merlin]
             for servant in servants:
                 trust_weight, mistrust_weight = 0, 0
                 if servant in merlin_feelings[0]:
@@ -182,6 +294,3 @@ class Analysis:
             return sum(heuristics)
         else: # If Merlin has no feelings, heuristic is USELESS!
             return 0
-
-    def add_1(self, role_set):
-        return 1

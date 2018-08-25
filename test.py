@@ -73,6 +73,13 @@ def test1():
     
     # go back to the team of 3 that succeeded before
 
+    a.accuse(2, 4)
+    a.trust(2, 1)
+    a.accuse(1, 4)
+    a.trust(1, 2)
+    a.accuse(3, 4)
+    a.trust(3, 2)
+
     # propose a team with players 0, 1, 4
     # move on to vote
     # three accept the team, including both BAD PEOPLE
@@ -88,20 +95,20 @@ def test1():
 
     # only one quest left!
 
-    # propose a team with players 1, 2, 3 (good guys)
+    # propose a team with players 0 1 2(good guys)
     # move on to vote
     # three good guys accept the team
     typewrite("1\n1\n1\n0\n0\n")
     # the quest succeeds
     typewrite("1\n1\n1\n")
-    a.propose_team([1, 2, 3], a.cur_quest(), a.people_per_quest[a.cur_quest()], 'y')
+    a.propose_team([0, 1, 2], a.cur_quest(), a.people_per_quest[a.cur_quest()], 'y')
 
     # print(get_all_players(a))
     # print(get_known_players(a))
     # print(create_possibilities(a))
     
-    a.known([0, 5], 3)
-    a.known([0, 5], 4)
+    # a.known([0, 5], 3)
+    # a.known([0, 5], 4)
 
     ana = Analysis(a)
     ana.start_analysis()

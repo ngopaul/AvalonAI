@@ -29,6 +29,7 @@ class Avalon:
         self.num_bad = 0
         self.num_good = 0
         self.role_types = {'Normal Bad': 0, 'Normal Good': 0, 'Merlin': 0, 'Percival': 0, 'Morgana': 0, 'Mordred': 0, 'Oberon': 0}
+        self.starting_leader = 0
 
         """ Varying variables that change throughout the game """
 
@@ -98,9 +99,11 @@ class Avalon:
             self.role_types['Mordred'] = sanitised_input("Mordred: ", int)
             self.role_types['Oberon'] = sanitised_input("Oberon: ", int)
             self.current_leader = sanitised_input("Starting leader: ", int, max_= self.num_players - 1)
+            self.starting_leader = current_leader
         else:
             self.num_players = numplayers
             self.role_types = roletypes
+            self.starting_leader = currentleader
             self.current_leader = currentleader
         
         self.accusations = [[] for i in range(self.num_players)]
@@ -151,6 +154,17 @@ class Avalon:
         print("Known Players:", self.known_players)
         print("Feelings:", self.feelings)
 
+    """ Gives the quest number (e.g. 0, 1, 2, etc.) for an 
+    index (time) in the propose history """
+    def quest_of_time(self, time):
+        quest_times = [quest_info[0] for quest_info in self.quest_history]
+        quest_num = 0
+        while quest_num < len(quest_times):
+            if time <= quest_times[quest_num]:
+                return quest_num
+            quest_num += 1
+        return quest_num
+
     """ One player accuses another of being evil, or being a specific role. """
     def accuse(self, player_accusing, player_accused):
         if not (check_person(self, player_accused) and check_person(self, player_accusing) and player_accusing != player_accused):
@@ -158,6 +172,8 @@ class Avalon:
             return
         if (not (player_accusing in self.feelings)):
             self.feelings[player_accusing] = [{}, {player_accused : [self.current_time()]}]
+        elif not player_accused in self.feelings[player_accusing][1].keys():
+            self.feelings[player_accusing][1][player_accused] = [self.current_time()]
         else:
             self.feelings[player_accusing][1][player_accused].append(self.current_time())
         
@@ -167,6 +183,8 @@ class Avalon:
             return
         if (not (player_trusting in self.feelings)):
             self.feelings[player_trusting] = [{player_trusted : [self.current_time()]}, {}]
+        elif not player_trusted in self.feelings[player_trusting][0].keys():
+            self.feelings[player_trusting][0][player_trusted] = [self.current_time()]
         else:
             self.feelings[player_trusting][0][player_trusted].append(self.current_time())
 
