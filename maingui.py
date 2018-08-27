@@ -5,7 +5,6 @@ import time
 import sys, pygame
 pygame.init()
 pygame.font.init()
-myfont = pygame.font.SysFont('Comic Sans MS', 30)
 background = (30, 30, 30)
 size = width, height = 1280, 800
 screen = pygame.display.set_mode(size)
@@ -14,14 +13,7 @@ COLOR_INACTIVE = pygame.Color('lightskyblue3')
 COLOR_ACTIVE = pygame.Color('dodgerblue2')
 FONT = pygame.font.Font(None, 32)
 
-# we must start our event dictionary here because everything below is used by pygame
-event_dict = {
-    'errplayer' : 257,
-
-    'initnumplayers' : 32768,
-    'chooseroles' : 37270
-}
-
+""" Make an event occur in the pygame event queue. """
 def make_event(eventname, errorstate):
     new_event = pygame.event.Event(pygame.USEREVENT, {"name": eventname, "error": errorstate})
     pygame.event.post(new_event)
@@ -29,16 +21,17 @@ def make_event(eventname, errorstate):
 """ There are many different states in the game. In order to easily be able to 
 change between states and therefore change the available commands, each of 
 these functions will populate the commands list properly. """
-
-# accuse, trust, known, propose team
+# accuse, trust, known, propose team is the standard
 def commands_change(list_commands):
     commands.remove_all()
-    actionbox_loc = [40, 200]
+    actionbox_loc = [270, 140]
     # making all the commands
     for command in list_commands:
         commands.append(ActionBox(actionbox_loc[0], actionbox_loc[1],command,'radio', COLOR_INACTIVE, 'mainstate', command))
-        actionbox_loc[1] += 25
+        actionbox_loc[1] += 35
 
+""" This is the MainGame object, which handles every event 
+ and puts it into an Avalon Object. """
 class MainGame:
     def __init__(self):
         self.num_players = 0
@@ -67,7 +60,7 @@ class MainGame:
     
     def handle_event(self, event):
         if self.a.game_state < 2:
-            commands_change(['analyze'])
+            commands_change(['analyze', 'print'])
         if event.type == pygame.USEREVENT and not event.__dict__['error']:
             try: # to catch errors and instead throw an Event error
                 if current_event == "submitnext":
@@ -80,6 +73,7 @@ class MainGame:
                         role_types['Normal Good'] = player_alignment[self.num_players][0] - (role_types['Merlin'] + role_types['Percival'])
                         if role_types['Normal Bad'] < 0 or role_types['Normal Good'] < 0: # selected too many roles
                             assert 1 == 0
+                        print("a.initialize(%s, %s, 0)" % (self.num_players, role_types))
                         self.a.initialize(self.num_players, role_types, 0)
 
                         # making all the players
@@ -94,7 +88,7 @@ class MainGame:
                         self.vote_list = [0 for i in range(self.num_players)]
 
                         # showing the right commands
-                        commands_change(["accuse", "trust", 'known', 'propose_team', 'analyze'])
+                        commands_change(["accuse", "trust", 'known', 'propose_team', 'analyze', 'print'])
 
                         roles_involved.items = [] # to save on time
 
@@ -105,60 +99,72 @@ class MainGame:
                     # because you can propose a team and get shot down.
                     elif prev_event == "accuse":
                         assert len(self.accuse) == 2
+                        print("a.accuse("+str(self.accuse[0])+", "+str(self.accuse[1])+")")
                         self.a.accuse(self.accuse[0], self.accuse[1])
                         self.reset()
                     elif prev_event == "trust":
                         assert len(self.trust) == 2
+                        print("a.trust("+str(self.trust[0])+", "+str(self.trust[1])+")")
                         self.a.trust(self.trust[0], self.trust[1])
                         self.reset()
                     elif prev_event == "known":
+                        print("a.known("+str(self.known)+", "+str(self.known_player)+")")
                         self.a.known(self.known, self.known_player)
                         self.reset()
                     elif prev_event == "propose_team":
                         assert self.a.people_per_quest[self.a.cur_quest()] == len(self.proposed_team)
                         players.deactivate()
-                        commands_change(['proceed_on_proposed', 'cancel_on_proposed'])
+                        commands_change(['proceed_on_proposed', 'cancel_on_proposed', 'print'])
                     elif prev_event == "proceed_on_proposed":
+                        print("a.propose_team(%s, %s, %s, 'y', True)" % (self.proposed_team, self.a.cur_quest(), self.a.people_per_quest[self.a.cur_quest()]))
                         self.a.propose_team(self.proposed_team, self.a.cur_quest(), self.a.people_per_quest[self.a.cur_quest()], 'y', True)
                         players.deactivate()
-                        commands_change(['vote'])
+                        commands_change(['vote', 'print'])
                     elif prev_event == "cancel_on_proposed":
+                        print("a.propose_team(%s, %s, %s, 'n', True)" % (self.proposed_team, self.a.cur_quest(), self.a.people_per_quest[self.a.cur_quest()]))
                         self.a.propose_team(self.proposed_team, self.a.cur_quest(), self.a.people_per_quest[self.a.cur_quest()], 'n', True)
                         self.reset()
-                        commands_change(["accuse", "trust", 'known', 'propose_team', 'analyze'])
+                        commands_change(["accuse", "trust", 'known', 'propose_team', 'analyze', 'print'])
                     elif prev_event == "vote":
+                        print("a.vote(%s, %s, %s, True)" % (self.vote_list.count(1), self.vote_list.count(0), self.vote_list))
                         continue_to_quest = self.a.vote(self.vote_list.count(1), self.vote_list.count(0), self.vote_list, True)
                         if continue_to_quest:
-                            commands_change(['quest'])
+                            commands_change(['quest', 'print'])
                             self.reset()
                         else:
-                            commands_change(["accuse", "trust", 'known', 'propose_team', 'analyze'])
+                            commands_change(["accuse", "trust", 'known', 'propose_team', 'analyze', 'print'])
                             self.reset()
                     elif prev_event == "quest":
+                        print("a.quest(%s, %s, %s, True)" % (self.a.quest_state[5], self.quest_votes[:self.a.people_per_quest[self.a.cur_quest()]], self.a.cur_quest()))
                         self.a.quest(self.a.quest_state[5], self.quest_votes[:self.a.people_per_quest[self.a.cur_quest()]], self.a.cur_quest(), True)
                         if self.a.game_state > 2:
-                            commands_change(["accuse", "trust", 'known', 'propose_team', 'analyze'])
+                            commands_change(["accuse", "trust", 'known', 'propose_team', 'analyze', 'print'])
                         elif self.a.game_state == 2:
-                            commands_change(["guess_merlin", 'analyze'])
+                            commands_change(["guess_merlin", 'analyze','print'])
                         self.reset()
+                    elif prev_event == "print":
+                        print("---")
+                        main_game.a.print_all()
+                        print("---")
                     elif prev_event == "analyze":
                         self.ana = Analysis(self.a)
                         self.ana.start_analysis()
                         self.ana.analyze()
                     elif prev_event == "guess_merlin":
-                        main_game.a.print_all()
-                        print("\n")
+                        # main_game.a.print_all()
+                        # print("\n")
                         make_event("check_merlin", False)
                         players.deactivate()
                         return
                     elif prev_event == "check_merlin":
+                        print("a.guess_merlin(%s, %s)" % (self.merlin_guess, self.actual_merlin))
                         self.a.guess_merlin(self.merlin_guess, self.actual_merlin)
-                        commands_change(["analyze"])
-                    main_game.a.print_all()
-                    print("\n")
+                        commands_change(["analyze", 'print'])
+                    # main_game.a.print_all()
+                    # print("\n")
                     make_event('mainstate', False)
             except Exception as e:
-                print(e)
+                # print(e)
                 make_event("Improper Input", True)
                 make_event('mainstate', False)
                 self.reset()
@@ -166,7 +172,7 @@ class MainGame:
     # parses text input. Here we use current event, not previous event 
     # (since we don't click the check mark for text)
     def parse(self, inpt):
-        print("Parsing " + inpt, "with current_event: " + str(current_event))
+        # print("Parsing " + inpt, "with current_event: " + str(current_event))
         if current_event == 'initnumplayers':
             try:
                 self.num_players = int(inpt)
@@ -175,12 +181,14 @@ class MainGame:
                 else:
                     make_event("Wrong Number of Players", True)
             except:
-                print("Throwing error.")
+                # print("Throwing error.")
                 make_event("Improper Input", True)
         elif current_event == 'quest':
             # TODO
             pass
 
+""" An input box, which when in an active state (clicking on it), will allow
+ text input which canthen be parsed by the MainGame. """
 class InputBox:
     def __init__(self, x, y, w, h, text='', hidelist = []):
         self.rect = pygame.Rect(x, y, w, h)
@@ -231,6 +239,7 @@ class InputBox:
     def clear(self):
         pygame.draw.rect(screen, background, self.rect, 0)
 
+""" Text displayed on the screen. """
 class TextOut:
     def __init__(self, x, y, text, color = COLOR_ACTIVE):
         self.x = x
@@ -252,10 +261,12 @@ class TextOut:
     def draw(self, screen):
         screen.blit(self.txt_surface, (self.x, self.y))
 
+""" A TextOut class specifically designed to handle STATES in the game, 
+such as during a selected action. """
 class MainText(TextOut):
     def __init__(self, color = COLOR_ACTIVE):
-        self.x = 40
-        self.y = 20
+        self.x = 140
+        self.y = 40
         self.color = color
         self.text = "How many players?"
         self.txt_surface = FONT.render(self.text, True, self.color)
@@ -296,10 +307,11 @@ class MainText(TextOut):
         self.txt_surface_clear = FONT.render(self.text, True, background)
         self.draw(screen)
 
+""" A TextOut class specifically designed to handle ERRORS in the game. """
 class ErrText(TextOut):
     def __init__(self, color = COLOR_ACTIVE):
-        self.x = 45
-        self.y = 45
+        self.x = 145
+        self.y = 65
         self.color = color
         self.text = ""
         self.txt_surface = FONT.render(self.text, True, self.color)
@@ -322,6 +334,7 @@ class ErrText(TextOut):
         else:
             self.draw(screen)
 
+""" An ActionBox has TEXT, which when clicked, will MAKE an EVENT with name TEXT. """
 class ActionBox(TextOut):
     def __init__(self, x, y, text, typeof = 'check', color = COLOR_INACTIVE, activeevent = 'chooseroles', activation = ''): # another type would be radio
         self.x = x
@@ -358,6 +371,7 @@ class ActionBox(TextOut):
         self.txt_surface = FONT.render(self.text, True, self.color)
         screen.blit(self.txt_surface, (self.x, self.y))
 
+""" This ActionBox specifically allows for selection, not action. """
 class RoleSelection(ActionBox):
     def __init__(self, x, y, text, color = COLOR_INACTIVE, activeeevent = 'known'):
         self.x = x
@@ -386,6 +400,7 @@ class RoleSelection(ActionBox):
                 if role_numbers[self.role] in main_game.known:
                     main_game.known.remove(role_numbers[self.role])
 
+""" A Button allows some event to be added to the event queue when clicked. """
 class Button():
     def __init__(self, x, y, image, eventtype = 'submitnext', typeof = 'activate', hidelist = []): #also toggle
         self.x = x
@@ -415,6 +430,8 @@ class Button():
     def draw(self, screen):
         screen.blit(self.image, self.imagerect)
 
+""" Acts like a list of Objects. Any normal object method applied to ManyItems, 
+such as .update or .draw or .handle_event, will be applied to each of its items. """
 class ManyItems():
     def __init__(self, items):
         self.items = items
@@ -457,6 +474,10 @@ class ManyItems():
     def length(self):
         return len(self.items)
 
+""" A player is an object which can be selected to affect game state when different
+actions are currently being done. For example, in 'mainstate', they cannot be selected.
+However, in the 'accuse' state, they can be selected, and the first two selected will
+be added to the MainGame's accuse list for when the accusal is submitted with the checkmark."""
 class Player():
     def __init__(self, number):
         theta = 2 * pi * number / main_game.num_players
@@ -493,7 +514,7 @@ class Player():
                             main_game.accuse.remove(self.number)
                         except:
                             pass
-                    print("accuse:", main_game.accuse)
+                    # print("accuse:", main_game.accuse)
                 elif current_event == "trust":
                     if self.active and len(main_game.trust) < 2: # you selected it
                         main_game.trust.append(self.number)
@@ -502,7 +523,7 @@ class Player():
                             main_game.trust.remove(self.number)
                         except:
                             pass
-                    print("trust:", main_game.trust)
+                    # print("trust:", main_game.trust)
                 elif current_event == "known":
                     if self.active:
                         players.deactivate()
@@ -516,19 +537,19 @@ class Player():
                             main_game.proposed_team.remove(self.number)
                         except:
                             pass
-                    print("proposed team:", main_game.proposed_team)
+                    # print("proposed team:", main_game.proposed_team)
                 elif current_event == "vote":
                     if self.active: # you selected it
                         main_game.vote_list[self.number] = 1
                     else: # you deselected it
                         main_game.vote_list[self.number] = 0
-                    print("current votes:", main_game.vote_list)
+                    # print("current votes:", main_game.vote_list)
                 elif current_event == "quest":
                     if self.active: # you selected it
                         main_game.quest_votes[self.number] = 1
                     else: # you deselected it
                         main_game.quest_votes[self.number] = 0
-                    print("current quest outcome:", main_game.quest_votes[:main_game.a.people_per_quest[main_game.a.cur_quest()]])
+                    # print("current quest outcome:", main_game.quest_votes[:main_game.a.people_per_quest[main_game.a.cur_quest()]])
                 elif current_event == "guess_merlin":
                     if self.active:
                         players.deactivate()
@@ -550,6 +571,9 @@ class Player():
         pygame.draw.circle(screen, self.color, (self.x, self.y), 15, 0)
         screen.blit(self.txt_surface, (self.x - 7, self.y - 9))
 
+""" Rotate button. Specifically designed to rotate players. If this was professional code, 
+this should probably be a possible state of the BUTTON 
+(i.e. type = hold, action = rotate_players). """
 class Rotate():
     def __init__(self, x, y, image, rotation):
         self.x = x
@@ -578,14 +602,19 @@ class Rotate():
     def draw(self, screen):
         screen.blit(self.image, self.imagerect)
 
+""" A token is an image which will be displayed at location X, Y with an IMAGE and a SCALE.
+In the case of Avalon GUI, it literally displays tokens used in the game. """
 class Token():
-    def __init__(self, x, y, image):
+    def __init__(self, x, y, image, scale = 0.53):
         self.x = x
         self.y = y
         self.image = image
+        self.image = pygame.transform.rotozoom(self.image, 0, scale)
         self.imagerect = image.get_rect()
         self.imagerect.left = self.x
         self.imagerect.top = self.y
+        self.imagerect.width = self.imagerect.width / 2
+        self.imagerect.height = self.imagerect.height / 2
     
     def update(self):
         self.draw(screen)
@@ -593,52 +622,69 @@ class Token():
     def draw(self, screen):
         screen.blit(self.image, self.imagerect)
 
+""" The GameBoard is a way to show the user what the real-life Avalon Board should look like.
+Currently, it is always a 7-player board, but that is okay for now. """
 class GameBoard():
-    def __init__(self):
+    def __init__(self, x, y):
         self.board = pygame.image.load("7playerboard.jpg")
+        self.board = pygame.transform.rotozoom(self.board, 0, 0.3)
         self.quests = ManyItems([])
-        self.rejected = 0
+        self.x = x
+        self.y = y
+        self.boardrect = self.board.get_rect()
+        self.boardrect.left = self.x
+        self.boardrect.top = self.y
     
+    def handle_event(self, event):
+        pass
+
     def update(self):
-        if self.quests.length < len(main_game.a.quest_history):
-            self.quests.append(Token())
-        self.rejected = main_game.a.quest_state[5]
+        if self.quests.length() < len(main_game.a.quest_history):
+            self.quests.append(Token(self.x + 34 + self.quests.length() * 110, self.y + 187, 
+            pygame.image.load("successfulquest.png") if main_game.a.quest_history[len(main_game.a.quest_history) - 1][1] else
+            pygame.image.load("failedquest.png")))
+        self.rejected = Token(self.x + 45 + main_game.a.quest_state[5] * 80, self.y + 345, pygame.image.load("questmarker.png"), 0.59)
         self.draw(screen)
     
     def draw(self, screen):
-        pass
+        screen.blit(self.board, self.boardrect)
+        self.quests.update()
+        self.rejected.update()
 
+# initialize loop and time
 done = False
 clock = pygame.time.Clock()
 
 # initialize roles involved right now because that's what you want 
 # to work with at the start of the game
 actionboxes = []
-actionbox_loc = [40, 200]
+actionbox_loc = [270, 140]
 for player_type in list(role_numbers.keys()):
     if player_type != "Normal Bad" and player_type != "Normal Good":
         actionboxes.append(ActionBox(actionbox_loc[0], actionbox_loc[1], player_type))
-        actionbox_loc[1] += 25
+        actionbox_loc[1] += 35
 roles_involved = ManyItems(actionboxes)
 
+# When KNOWN players need to be selected, this will show up
 roleselectboxes = []
-roleselect_loc = [900, 200]
+roleselect_loc = [825, 80]
 for player_type in list(role_numbers.keys()):
     roleselectboxes.append(RoleSelection(roleselect_loc[0], roleselect_loc[1], player_type))
-    roleselect_loc[1] += 25
+    roleselect_loc[1] += 35
 known_selection = ManyItems(roleselectboxes)
 
-# we'll initialize COMMANDS later.
+# we'll fill in COMMANDS later.
 commands = ManyItems([])
-# we'll initialize PLAYERS later.
+# we'll fill in PLAYERS later.
 players = ManyItems([])
-# we'll initialize ROTATE buttons later.
+# we'll fill in ROTATE buttons later.
 rotate_buttons = ManyItems([])
 
-# Our main input box for text input
-main_input = InputBox(100, 100, 140, 32, hidelist=['chooseroles', 'mainstate', 
+# Our main input box for text input (it will hide in the HIDELIST active states)
+main_input = InputBox(200, 100, 140, 32, hidelist=['chooseroles', 'mainstate', 
 'accuse', 'trust', 'known', 'propose_team', 'vote', 'quest', 'vote_merlin', 
-'proceed_on_proposed', 'cancel_on_proposed', 'guess_merlin', 'check_merlin'])
+'proceed_on_proposed', 'cancel_on_proposed', 'guess_merlin', 'check_merlin',
+'print', 'analyze'])
 # Our main text
 main_text = MainText()
 # our error messages
@@ -646,11 +692,16 @@ err_text = ErrText()
 # a handler between pygame and avalon
 main_game = MainGame()
 # our two buttons for summission and cancelation
-submit_button = Button(990, 30, pygame.image.load("checkmark.png"), hidelist = ['initnumplayers'])
-cancel_button = Button(1030, 30, pygame.image.load("xmark.png"), 'cancelnext', hidelist = ['initnumplayers'])
+submit_button = Button(990, 30, 
+pygame.image.load("checkmark.png"), hidelist = ['initnumplayers'])
+cancel_button = Button(1030, 30, 
+pygame.image.load("xmark.png"), 'cancelnext', hidelist = ['initnumplayers'])
+# our game board
+game_board = GameBoard(320, 385)
 
 # we iterate through our items to update them
-items = [main_game, players, rotate_buttons, commands, main_input, main_text, err_text, submit_button, cancel_button, roles_involved, known_selection]
+items = [main_game, game_board, players, rotate_buttons, commands, main_input, 
+main_text, err_text, submit_button, cancel_button, roles_involved, known_selection]
 
 # keeping track of the state of the game
 prev_event = ""
@@ -681,8 +732,8 @@ while not done:
                 # you tried canceling things in the list
                 else: 
                     make_event("Can't cancel now!", True)
-            print("Current event:", current_event)
-            print("Previous event:", prev_event)
+            # print("Current event:", current_event)
+            # print("Previous event:", prev_event)
         for item in items:
             item.handle_event(event)
     for item in items:

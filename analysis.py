@@ -173,11 +173,14 @@ class Analysis:
             scores[i] = sum([votes[i]*propose_goodness[i]*propose_importance[i] for i in range(len(votes))])
 
         scores = [1/2 * scores[i] + self.player_values[i] for i in range(len(scores))]
+
         # Tailored ideas to differentiate and add points properly
-        # print("SCORES:", scores)
-        # Merlin is the most good
+        # Merlin/Percival is the most good
         if 2 in role_set:
             if scores[role_set.index(2)] == max(scores):
+                points += 1
+        if 3 in role_set:
+            if scores[role_set.index(3)] == max(scores):
                 points += 1
         # The most bad is a bad person
         if role_set[scores.index(min(scores))] in self.minion_set:
@@ -201,17 +204,17 @@ class Analysis:
         quests_failed_index = []
         for quest in self.a.quest_history:
             if quest[1] == 0:
-                quests_failed_index.append(quest[0])
+                quests_failed_index.append((quest[0], quest[2]))
         
-        for failed_quest_index in quests_failed_index:
-            # guy put on a team is good--- 0. is bad---1
+        for failed_quest_index, num_fails in quests_failed_index:
+            # guy put on a team is good--- 1. is bad--- 0
             good_or_bad = []
             for person_index in self.a.propose_history[failed_quest_index]:
                 if role_set[person_index] in self.minion_set:
-                    good_or_bad.append(1)
-                else:
                     good_or_bad.append(0)
-            if not 1 in good_or_bad:
+                else:
+                    good_or_bad.append(1)
+            if good_or_bad.count(0) < num_fails:
                 role_impossible = True
 
         if role_impossible:

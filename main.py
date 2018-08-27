@@ -234,7 +234,7 @@ class Avalon:
         if approved_counts > rejected_counts:
             if command_line == False:
                 previous_rejects = self.quest_state[5]
-                print("Quest Initiated!")
+                # print("Quest Initiated!")
                 votes = []
                 cur_quest = self.cur_quest()
                 for i in range(self.people_per_quest[self.cur_quest()]):
@@ -272,7 +272,7 @@ class Avalon:
         self.quest_state[cur_quest] = quest_result
         self.quest_state[5] = 0
         self.change_current_leader()
-        print("Quest result: " + ("good" if quest_result else "bad"))
+        # print("Quest result: " + ("good" if quest_result else "bad"))
         if self.quest_state[:-1].count(0) >= 3:
             self.game_state = 0 # Bad guys win
         if self.quest_state[:-1].count(1) >= 3:
