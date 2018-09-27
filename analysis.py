@@ -44,7 +44,7 @@ class Analysis:
         self.c.execute("select * from possibilities")
         rows = self.c.fetchall()
         for row in rows:
-            role_set = row[0:5]
+            role_set = row[0:len(row)-1]
 
             # This is where the magic happens for each row. Score is calulated here.
             score = self.apply_heuristics(role_set)
@@ -155,7 +155,7 @@ class Analysis:
         # list of 1's and -1's which represent there being all good, or not all good people on the team.
         propose_goodness = []
         # list of importance numbers based on the quest that is currently being proposed
-        propose_importance = [importance[self.a.quest_of_time(i)] for i in range(len(self.a.propose_history))]
+        propose_importance = [importance[max(self.a.quest_of_time(i) - 1, 0)] for i in range(len(self.a.propose_history))]
         # filling up propose_goodness
         for proposal in self.a.propose_history:
             state = 1
@@ -263,6 +263,7 @@ class Analysis:
     """
 
     # The Merlin trusts good people and mistrusts bad people.
+    # Give a point max for trusting good people, Give a point max for mistrusting bad
     def sa_merlin_trusts_good_mistrusts_bad(self, role_set):
         if not 2 in role_set:
             return 0
@@ -321,5 +322,5 @@ class Analysis:
                     mistrust_weight = merlin_feelings[1][servant][-1]
                 heuristics.append(trust_weight > mistrust_weight)
             return sum(heuristics)
-        else: # If Merlin has no feelings, heuristic is USELESS!
+        else: # If Merlin has no feelings
             return 0

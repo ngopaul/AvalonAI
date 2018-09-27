@@ -84,6 +84,8 @@ class Avalon:
             useIn = input("Welcome to Avalon AI! Press enter to continue. ")
             if useIn == "skip":
                 self.initialize(5, {'Normal Bad': 2, 'Normal Good': 3, 'Merlin': 0, 'Percival': 0, 'Morgana': 0, 'Mordred': 0, 'Oberon': 0})
+            elif useIn == "set":
+                pass
             else:
                 self.initialize()
 
@@ -99,7 +101,7 @@ class Avalon:
             self.role_types['Mordred'] = sanitised_input("Mordred: ", int)
             self.role_types['Oberon'] = sanitised_input("Oberon: ", int)
             self.current_leader = sanitised_input("Starting leader: ", int, max_= self.num_players - 1)
-            self.starting_leader = current_leader
+            self.starting_leader = self.current_leader
         else:
             self.num_players = numplayers
             self.role_types = roletypes

@@ -80,6 +80,15 @@ class MainGame:
                         for i in range(self.num_players):
                             players.append(Player(i))
 
+                        global items
+                        # setting up the gameboard
+                        items.append(GameBoard(320, 385, 0.125, str(self.num_players) + "playerboard.jpg", 0, 0))
+                        # if self.num_players == 5:
+                        #     items.append(GameBoard(320, 385, 0.62, "5playerboard.png", 14, 20))
+                        # else:
+                        #     items.append(GameBoard(320, 385, 0.3, "7playerboard.jpg", 0, 0))
+
+
                         # making the rotate buttons
                         rotate_buttons.append(Rotate(600, 320, pygame.image.load("arrowleft.png"),pi/40))
                         rotate_buttons.append(Rotate(640, 320, pygame.image.load("arrowright.png"),-pi/40))
@@ -164,7 +173,7 @@ class MainGame:
                     # print("\n")
                     make_event('mainstate', False)
             except Exception as e:
-                # print(e)
+                print(e)
                 make_event("Improper Input", True)
                 make_event('mainstate', False)
                 self.reset()
@@ -625,25 +634,25 @@ class Token():
 """ The GameBoard is a way to show the user what the real-life Avalon Board should look like.
 Currently, it is always a 7-player board, but that is okay for now. """
 class GameBoard():
-    def __init__(self, x, y):
-        self.board = pygame.image.load("7playerboard.jpg")
-        self.board = pygame.transform.rotozoom(self.board, 0, 0.3)
+    def __init__(self, x, y, zoom = 0.3, image_name = "7playerboard.jpg", offsetx = 0, offsety = 0):
+        self.board = pygame.image.load(image_name)
+        self.board = pygame.transform.rotozoom(self.board, 0, zoom)
         self.quests = ManyItems([])
         self.x = x
         self.y = y
         self.boardrect = self.board.get_rect()
-        self.boardrect.left = self.x
-        self.boardrect.top = self.y
+        self.boardrect.left = self.x + offsetx
+        self.boardrect.top = self.y + offsety
     
     def handle_event(self, event):
         pass
 
     def update(self):
         if self.quests.length() < len(main_game.a.quest_history):
-            self.quests.append(Token(self.x + 34 + self.quests.length() * 110, self.y + 187, 
+            self.quests.append(Token(self.x + 25 + self.quests.length() * 113, self.y + 182, 
             pygame.image.load("successfulquest.png") if main_game.a.quest_history[len(main_game.a.quest_history) - 1][1] else
             pygame.image.load("failedquest.png")))
-        self.rejected = Token(self.x + 45 + main_game.a.quest_state[5] * 80, self.y + 345, pygame.image.load("questmarker.png"), 0.59)
+        self.rejected = Token(self.x + 36 + main_game.a.quest_state[5] * 82, self.y + 344, pygame.image.load("questmarker.png"), 0.59)
         self.draw(screen)
     
     def draw(self, screen):
@@ -697,10 +706,13 @@ pygame.image.load("checkmark.png"), hidelist = ['initnumplayers'])
 cancel_button = Button(1030, 30, 
 pygame.image.load("xmark.png"), 'cancelnext', hidelist = ['initnumplayers'])
 # our game board
-game_board = GameBoard(320, 385)
+# 7 player board: 
+# game_board = GameBoard(320, 385, 0.3, "7playerboard.jpg", 0, 0)
+# 5 player board
+# game_board = GameBoard(320, 385, 0.62, "5playerboard.png", 14, 20)
 
 # we iterate through our items to update them
-items = [main_game, game_board, players, rotate_buttons, commands, main_input, 
+items = [main_game, players, rotate_buttons, commands, main_input, 
 main_text, err_text, submit_button, cancel_button, roles_involved, known_selection]
 
 # keeping track of the state of the game
