@@ -21,7 +21,7 @@ We try to apply heuristics to our possible teams to evaluate how likely each com
 
 We will have several main stages to narrow our search to a manageable dataset:
 
-- Analyze impossibles: Quests with fails cannot possible have all good roles.
+- Analyze impossibles: Quests with fails cannot possibly have all good roles.
 - Analyze the data with no special roles, just Minions and Servants. This scores players positively for good actions, and negatively for bad ones. A 0 score for a player means the AI thinks he/she are neither good nor evil.
 - Analyze each possible combination of players, and rank which is the most likely by their score; score using the heuristics that we create (including the first analysis above). A command in the main game should output the top highest likely possibilities.
 
