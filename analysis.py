@@ -26,7 +26,6 @@ class Analysis:
 
     """ Runs heurisitics on the Avalon object. """
     def analyze(self, limit = sys.maxsize, include_player_vals = False):
-
         # This first part is a pass through of the first heuristic, 
         # which is voting good or bad for good or bad quests.
         self.player_values = []
@@ -35,7 +34,19 @@ class Analysis:
         for player in range(self.a.num_players):
             self.player_values.append(self.vote(player))
             order_string += " a" + str(i) + ","
-        
+        # Filter impossibles
+        order_string = order_string[:-1] + ";"
+        self.c.execute("select * from possibilities")
+        rows = self.c.fetchall()
+        for row in rows:
+            role_set = row[0:len(row)-1]
+            score = self.filter_impossibles(role_set)
+            where_string = ""
+            for i in range(len(role_set)):
+                where_string += " a" + str(i+1) + " = " + str(role_set[i]) + " and "
+            where_string = where_string[:-4]
+            if score == -99:
+                self.c.execute("DELETE FROM possibilities" + " where " + where_string + ";")
         # This second part we can hone with machine learning or 
         # just by hand. The idea is to apply heurisitics to every possible 
         # set of roles, and based on scoring each of the possible sets, one 
@@ -45,17 +56,14 @@ class Analysis:
         rows = self.c.fetchall()
         for row in rows:
             role_set = row[0:len(row)-1]
-
             # This is where the magic happens for each row. Score is calulated here.
             score = self.apply_heuristics(role_set)
-
             # updating the score for the column
             where_string = ""
             for i in range(len(role_set)):
                 where_string += " a" + str(i+1) + " = " + str(role_set[i]) + " and "
             where_string = where_string[:-4]
             self.c.execute("update possibilities set score = " + str(score) + " where " + where_string + ";")
-        
         # Printing the scores just for testing purposes
         self.c.execute("select * from possibilities order by score")
         rows = self.c.fetchall()
@@ -67,8 +75,7 @@ class Analysis:
     weights for all of our heurisitics. """
     def apply_heuristics(self, role_set, weights=[1, 1, 1, 1, 1, 1]):
         heurisitics_set = [self.mm_coordinate, self.sa_merlin_trusts_good_mistrusts_bad, 
-        self.sa_merlin_quests_good, self.general_vote,
-        self.filter_impossibles]
+        self.sa_merlin_quests_good, self.general_vote]
         score = 0.0
         for i in range(len(heurisitics_set)):
             score += weights[i] * heurisitics_set[i](role_set)
@@ -220,7 +227,6 @@ class Analysis:
         if role_impossible:
             return -99
         return 0
-
 
     """ Heuristics for Minions of Mordred 
 

@@ -2,7 +2,7 @@
 
 from main import *
 import time
-import sys, pygame
+import sys, pygame, traceback
 pygame.init()
 pygame.font.init()
 background = (30, 30, 30)
@@ -13,15 +13,18 @@ COLOR_INACTIVE = pygame.Color('lightskyblue3')
 COLOR_ACTIVE = pygame.Color('dodgerblue2')
 FONT = pygame.font.Font(None, 32)
 
-""" Make an event occur in the pygame event queue. """
+""" Make an event occur in the pygame event queue. The eventname is the keyword that
+most pygame objects will use to decide how to update themselves. The errorstate
+is a boolean value, True if the event is an error and false otherwise. """
 def make_event(eventname, errorstate):
     new_event = pygame.event.Event(pygame.USEREVENT, {"name": eventname, "error": errorstate})
     pygame.event.post(new_event)
 
 """ There are many different states in the game. In order to easily be able to 
-change between states and therefore change the available commands, each of 
-these functions will populate the commands list properly. """
-# accuse, trust, known, propose team is the standard
+change between states and therefore change the available commands, this 
+function will populate the commands list properly. It takes in a list of commands,
+and changes the ManyItems of ActionBoxes. """
+# accuse, trust, known, propose team, print, analyze is the standard
 def commands_change(list_commands):
     commands.remove_all()
     actionbox_loc = [270, 140]
@@ -45,7 +48,10 @@ class MainGame:
         self.known_player = 0
         self.merlin_guess = 0
         self.actual_merlin = 0
+        self.analyze_num = -1
 
+    # return to a state where everything recorded is empty.
+    # does not reset the game, only resets what is selected.
     def reset(self):
         self.accuse = []
         self.trust = []
@@ -55,11 +61,13 @@ class MainGame:
         self.quest_votes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
         players.deactivate()
 
-    def update(self):
+    # the main game only handles events, 
+    # and should not be displayed, as it is abstract.
+    def update(self): 
         pass
     
     def handle_event(self, event):
-        if self.a.game_state < 2:
+        if self.a.game_state < 2: # the game is over
             commands_change(['analyze', 'print'])
         if event.type == pygame.USEREVENT and not event.__dict__['error']:
             try: # to catch errors and instead throw an Event error
@@ -75,44 +83,28 @@ class MainGame:
                             assert 1 == 0
                         print("a.initialize(%s, %s, 0)" % (self.num_players, role_types))
                         self.a.initialize(self.num_players, role_types, 0)
-
                         # making all the players
                         for i in range(self.num_players):
                             players.append(Player(i))
-
-                        global items
                         # setting up the gameboard
                         items.append(GameBoard(320, 385, 0.125, str(self.num_players) + "playerboard.jpg", 0, 0))
-                        # if self.num_players == 5:
-                        #     items.append(GameBoard(320, 385, 0.62, "5playerboard.png", 14, 20))
-                        # else:
-                        #     items.append(GameBoard(320, 385, 0.3, "7playerboard.jpg", 0, 0))
-
-
                         # making the rotate buttons
-                        rotate_buttons.append(Rotate(600, 320, pygame.image.load("arrowleft.png"),pi/40))
-                        rotate_buttons.append(Rotate(640, 320, pygame.image.load("arrowright.png"),-pi/40))
-                        
+                        rotate_buttons.append(Rotate(600, 320, pygame.image.load("resources/" + "arrowleft.png"),pi/40))
+                        rotate_buttons.append(Rotate(640, 320, pygame.image.load("resources/" + "arrowright.png"),-pi/40))
                         # prepopulating vote_list
                         self.vote_list = [0 for i in range(self.num_players)]
-
                         # showing the right commands
                         commands_change(["accuse", "trust", 'known', 'propose_team', 'analyze', 'print'])
-
                         roles_involved.items = [] # to save on time
-
                         # start the mainstate of the game!
                         make_event("mainstate", False)
-
                     # every command has self.reset() except propose_team, 
-                    # because you can propose a team and get shot down.
+                    # because you can propose a team and then decide not to go through with it.
                     elif prev_event == "accuse":
-                        assert len(self.accuse) == 2
                         print("a.accuse("+str(self.accuse[0])+", "+str(self.accuse[1])+")")
                         self.a.accuse(self.accuse[0], self.accuse[1])
                         self.reset()
                     elif prev_event == "trust":
-                        assert len(self.trust) == 2
                         print("a.trust("+str(self.trust[0])+", "+str(self.trust[1])+")")
                         self.a.trust(self.trust[0], self.trust[1])
                         self.reset()
@@ -158,10 +150,13 @@ class MainGame:
                     elif prev_event == "analyze":
                         self.ana = Analysis(self.a)
                         self.ana.start_analysis()
-                        self.ana.analyze()
+                        print("---")
+                        if self.analyze_num > 0:
+                            self.ana.analyze(self.analyze_num)
+                        else:
+                            self.ana.analyze()
+                        print("---")
                     elif prev_event == "guess_merlin":
-                        # main_game.a.print_all()
-                        # print("\n")
                         make_event("check_merlin", False)
                         players.deactivate()
                         return
@@ -169,12 +164,11 @@ class MainGame:
                         print("a.guess_merlin(%s, %s)" % (self.merlin_guess, self.actual_merlin))
                         self.a.guess_merlin(self.merlin_guess, self.actual_merlin)
                         commands_change(["analyze", 'print'])
-                    # main_game.a.print_all()
-                    # print("\n")
                     make_event('mainstate', False)
             except Exception as e:
+                traceback.print_exc()
                 print(e)
-                make_event("Improper Input", True)
+                make_event("Error! See Console.", True)
                 make_event('mainstate', False)
                 self.reset()
 
@@ -196,8 +190,15 @@ class MainGame:
             # TODO
             pass
 
+        elif current_event == 'analyze':
+            try:
+                self.analyze_num = int(inpt)
+            except:
+                self.analyze_num = -1
+                make_event("NaN", True)
+
 """ An input box, which when in an active state (clicking on it), will allow
- text input which canthen be parsed by the MainGame. """
+ text input which can then be parsed by the MainGame, after presing the Enter key. """
 class InputBox:
     def __init__(self, x, y, w, h, text='', hidelist = []):
         self.rect = pygame.Rect(x, y, w, h)
@@ -312,11 +313,16 @@ class MainText(TextOut):
             self.text = "Select yes votes. " + str(main_game.vote_list)
         elif current_event == 'quest':
             self.text = "Type number of fails. " + str(main_game.quest_votes[:main_game.a.people_per_quest[main_game.a.cur_quest()]])
+        elif current_event == 'print':
+            self.text = "Click the checkmark to console print."
+        elif current_event == 'analyze':
+            analyze_num = "All" if main_game.analyze_num < 0 else str(main_game.analyze_num)
+            self.text = "Click checkmark to analyze and show top: " + analyze_num + " players"
         self.txt_surface = FONT.render(self.text, True, self.color)
         self.txt_surface_clear = FONT.render(self.text, True, background)
         self.draw(screen)
 
-""" A TextOut class specifically designed to handle ERRORS in the game. """
+""" A TextOut class specifically designed to handle and print ERRORS in the game. """
 class ErrText(TextOut):
     def __init__(self, color = COLOR_ACTIVE):
         self.x = 145
@@ -343,7 +349,9 @@ class ErrText(TextOut):
         else:
             self.draw(screen)
 
-""" An ActionBox has TEXT, which when clicked, will MAKE an EVENT with name TEXT. """
+""" An ActionBox has TEXT, which when clicked, will MAKE an EVENT with name TEXT. 
+Most commands, like accuse, propose, quest, etc. are ActionBoxes.
+Note: hitbox is a rectangle, not the text. """
 class ActionBox(TextOut):
     def __init__(self, x, y, text, typeof = 'check', color = COLOR_INACTIVE, activeevent = 'chooseroles', activation = ''): # another type would be radio
         self.x = x
@@ -380,7 +388,7 @@ class ActionBox(TextOut):
         self.txt_surface = FONT.render(self.text, True, self.color)
         screen.blit(self.txt_surface, (self.x, self.y))
 
-""" This ActionBox specifically allows for selection, not action. """
+""" This ActionBox specifically allows for role selection - not action. """
 class RoleSelection(ActionBox):
     def __init__(self, x, y, text, color = COLOR_INACTIVE, activeeevent = 'known'):
         self.x = x
@@ -440,7 +448,8 @@ class Button():
         screen.blit(self.image, self.imagerect)
 
 """ Acts like a list of Objects. Any normal object method applied to ManyItems, 
-such as .update or .draw or .handle_event, will be applied to each of its items. """
+such as .update or .draw or .handle_event, will be applied to each of its items.
+Has special handling for Player objects. """
 class ManyItems():
     def __init__(self, items):
         self.items = items
@@ -508,22 +517,16 @@ class Player():
         self.txt_surface = FONT.render(str(self.number), True, (0, 0, 0))
     
     def handle_event(self, event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if self.rect.collidepoint(event.pos) and current_event not in ['mainstate', 'cancel_on_proposed', 'proceed_on_proposed'] :
-                # Toggle the active variable.
-                self.active = not self.active
-
-                # Do the current action's work (for each action)
-
+        if event.type == pygame.MOUSEBUTTONDOWN and self.rect.collidepoint(event.pos) and current_event not in ['mainstate', 'cancel_on_proposed', 'proceed_on_proposed'] :
+            # Toggle the active variable.
+            self.active = not self.active
+            # Do the current action's work (for each action)
+            try: #this try handles if main_game.____.remove(___) doesn't work
                 if current_event == "accuse":
                     if self.active and len(main_game.accuse) < 2: # you selected it
                         main_game.accuse.append(self.number)
                     elif not self.active: # you deselected it
-                        try:
                             main_game.accuse.remove(self.number)
-                        except:
-                            pass
-                    # print("accuse:", main_game.accuse)
                 elif current_event == "trust":
                     if self.active and len(main_game.trust) < 2: # you selected it
                         main_game.trust.append(self.number)
@@ -532,7 +535,6 @@ class Player():
                             main_game.trust.remove(self.number)
                         except:
                             pass
-                    # print("trust:", main_game.trust)
                 elif current_event == "known":
                     if self.active:
                         players.deactivate()
@@ -542,11 +544,7 @@ class Player():
                     if self.active: # you selected it
                         main_game.proposed_team.append(self.number)
                     elif not self.active: # you deselected it
-                        try:
-                            main_game.proposed_team.remove(self.number)
-                        except:
-                            pass
-                    # print("proposed team:", main_game.proposed_team)
+                        main_game.proposed_team.remove(self.number)
                 elif current_event == "vote":
                     if self.active: # you selected it
                         main_game.vote_list[self.number] = 1
@@ -569,8 +567,10 @@ class Player():
                         players.deactivate()
                         self.active = True
                         main_game.actual_merlin = self.number
-            # Change the current color of the box.
-            self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
+            except:
+                pass
+        # Change the current color of the player.
+        self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
 
     def update(self):
         self.color = COLOR_ACTIVE if self.active else COLOR_INACTIVE
@@ -580,9 +580,7 @@ class Player():
         pygame.draw.circle(screen, self.color, (self.x, self.y), 15, 0)
         screen.blit(self.txt_surface, (self.x - 7, self.y - 9))
 
-""" Rotate button. Specifically designed to rotate players. If this was professional code, 
-this should probably be a possible state of the BUTTON 
-(i.e. type = hold, action = rotate_players). """
+""" Rotate button. Specifically designed to rotate players. """
 class Rotate():
     def __init__(self, x, y, image, rotation):
         self.x = x
@@ -631,11 +629,10 @@ class Token():
     def draw(self, screen):
         screen.blit(self.image, self.imagerect)
 
-""" The GameBoard is a way to show the user what the real-life Avalon Board should look like.
-Currently, it is always a 7-player board, but that is okay for now. """
+""" The GameBoard is a way to show the user what the real-life Avalon Board should look like. """
 class GameBoard():
     def __init__(self, x, y, zoom = 0.3, image_name = "7playerboard.jpg", offsetx = 0, offsety = 0):
-        self.board = pygame.image.load(image_name)
+        self.board = pygame.image.load("resources/" + image_name)
         self.board = pygame.transform.rotozoom(self.board, 0, zoom)
         self.quests = ManyItems([])
         self.x = x
@@ -650,9 +647,9 @@ class GameBoard():
     def update(self):
         if self.quests.length() < len(main_game.a.quest_history):
             self.quests.append(Token(self.x + 25 + self.quests.length() * 113, self.y + 182, 
-            pygame.image.load("successfulquest.png") if main_game.a.quest_history[len(main_game.a.quest_history) - 1][1] else
-            pygame.image.load("failedquest.png")))
-        self.rejected = Token(self.x + 36 + main_game.a.quest_state[5] * 82, self.y + 344, pygame.image.load("questmarker.png"), 0.59)
+            pygame.image.load("resources/" + "successfulquest.png") if main_game.a.quest_history[len(main_game.a.quest_history) - 1][1] else
+            pygame.image.load("resources/" + "failedquest.png")))
+        self.rejected = Token(self.x + 36 + main_game.a.quest_state[5] * 82, self.y + 344, pygame.image.load("resources/" + "questmarker.png"), 0.59)
         self.draw(screen)
     
     def draw(self, screen):
@@ -693,7 +690,7 @@ rotate_buttons = ManyItems([])
 main_input = InputBox(200, 100, 140, 32, hidelist=['chooseroles', 'mainstate', 
 'accuse', 'trust', 'known', 'propose_team', 'vote', 'quest', 'vote_merlin', 
 'proceed_on_proposed', 'cancel_on_proposed', 'guess_merlin', 'check_merlin',
-'print', 'analyze'])
+'print'])
 # Our main text
 main_text = MainText()
 # our error messages
@@ -702,14 +699,9 @@ err_text = ErrText()
 main_game = MainGame()
 # our two buttons for summission and cancelation
 submit_button = Button(990, 30, 
-pygame.image.load("checkmark.png"), hidelist = ['initnumplayers'])
+pygame.image.load("resources/" + "checkmark.png"), hidelist = ['initnumplayers'])
 cancel_button = Button(1030, 30, 
-pygame.image.load("xmark.png"), 'cancelnext', hidelist = ['initnumplayers'])
-# our game board
-# 7 player board: 
-# game_board = GameBoard(320, 385, 0.3, "7playerboard.jpg", 0, 0)
-# 5 player board
-# game_board = GameBoard(320, 385, 0.62, "5playerboard.png", 14, 20)
+pygame.image.load("resources/" + "xmark.png"), 'cancelnext', hidelist = ['initnumplayers'])
 
 # we iterate through our items to update them
 items = [main_game, players, rotate_buttons, commands, main_input, 
